@@ -1,0 +1,765 @@
+// ============================================================================
+// NeighborGuard - Prisma Database Schema
+// Phase 2: Fusion Engine - Multi-sensor intelligent event generation
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// 1. USERS
+// ============================================================================
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  displayName   String    @map("display_name")
+  avatarUrl     String?   @map("avatar_url")
+  phone         String?
+  adminRole     AdminRole? @map("admin_role")
+  isActive      Boolean   @default(true) @map("is_active")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  ownedCircles      Circle[]       @relation("CircleOwner")
+  circleMemberships CircleMember[]
+  authCodes         AuthCode[]
+  refreshTokens     RefreshToken[]
+  deviceTokens      DeviceToken[]
+  eventFeedbacks    EventFeedback[]  // Phase 2: ML feedback
+
+  @@map("users")
+}
+
+// ============================================================================
+// 2. AUTH CODES
+// ============================================================================
+model AuthCode {
+  id        String    @id @default(uuid())
+  email     String
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  attempts  Int       @default(0)
+  userId    String?   @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  user      User?     @relation(fields: [userId], references: [id])
+
+  @@index([email, expiresAt])
+  @@map("auth_codes")
+}
+
+// ============================================================================
+// 3. REFRESH TOKENS
+// ============================================================================
+model RefreshToken {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique @map("token_hash")
+  userId     String    @map("user_id")
+  expiresAt  DateTime  @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  deviceInfo String?   @map("device_info")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================================
+// 4. EMAIL WHITELIST
+// ============================================================================
+model EmailWhitelist {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  notes     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("email_whitelist")
+}
+
+// ============================================================================
+// 5. DEVICE TOKENS
+// ============================================================================
+model DeviceToken {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  platform   Platform @default(IOS)
+  deviceName String?  @map("device_name")
+  appVersion String?  @map("app_version")
+  isActive   Boolean  @default(true) @map("is_active")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+// ============================================================================
+// 6. CIRCLES
+// ============================================================================
+model Circle {
+  id          String    @id @default(uuid())
+  ownerId     String    @map("owner_id")
+  displayName String    @map("display_name")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  
+  owner           User           @relation("CircleOwner", fields: [ownerId], references: [id])
+  members         CircleMember[]
+  home            Home?
+  zones           Zone[]
+  events          Event[]
+  integrations    Integration[]
+  sensors         Sensor[]
+  sensorEvents    SensorEvent[]    // Phase 2
+  tracks          Track[]          // Phase 2
+  eventFeedbacks  EventFeedback[]  // Phase 2: ML feedback
+  eventMLFeatures EventMLFeature[] // Phase 2: ML features
+
+  @@index([ownerId])
+  @@map("circles")
+}
+
+// ============================================================================
+// 7. HOMES (Phase 1B: 新增 houseMode 相关字段)
+// ============================================================================
+model Home {
+  id               String           @id @default(uuid())
+  circleId         String           @unique @map("circle_id")
+  displayName      String           @map("display_name")
+  country          String           @default("CA")
+  region           String           @default("")
+  city             String           @default("")
+  postalCode       String           @default("") @map("postal_code")
+  addressLine1     String?          @map("address_line1")
+  addressLine2     String?          @map("address_line2")
+  houseType        HouseType        @default(DETACHED) @map("house_type")
+  hasDriveway      Boolean          @default(true) @map("has_driveway")
+  hasBackYard      Boolean          @default(true) @map("has_back_yard")
+  hasBackAlley     Boolean          @default(false) @map("has_back_alley")
+  occupancyPattern OccupancyPattern @default(NORMAL) @map("occupancy_pattern")
+  // Phase 1B: House Mode
+  houseMode        HouseMode        @default(DISARMED) @map("house_mode")
+  nightModeAuto    Boolean          @default(false) @map("night_mode_auto")
+  nightModeStart   String           @default("22:00") @map("night_mode_start")
+  nightModeEnd     String           @default("06:00") @map("night_mode_end")
+  nightModeHighOnly Boolean         @default(false) @map("night_mode_high_only")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  
+  circle           Circle           @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  tracks           Track[]          // Phase 2
+
+  @@map("homes")
+}
+
+// ============================================================================
+// 8. CIRCLE MEMBERS
+// ============================================================================
+model CircleMember {
+  id                     String     @id @default(uuid())
+  circleId               String     @map("circle_id")
+  userId                 String     @map("user_id")
+  role                   MemberRole @default(NEIGHBOR)
+  displayName            String?    @map("display_name")
+  notifyOnHighSeverity   Boolean    @default(true) @map("notify_high")
+  notifyOnMediumSeverity Boolean    @default(true) @map("notify_medium")
+  notifyOnLowSeverity    Boolean    @default(false) @map("notify_low")
+  canViewAllEventMedia   Boolean    @default(true) @map("can_view_media")
+  joinedAt               DateTime   @default(now()) @map("joined_at")
+  updatedAt              DateTime   @updatedAt @map("updated_at")
+  leftAt                 DateTime?  @map("left_at")
+  
+  circle        Circle       @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdEvents Event[]      @relation("EventCreator")
+  eventNotes    EventNote[]
+  eventMedia    EventMedia[]
+
+  @@unique([circleId, userId])
+  @@index([userId])
+  @@map("circle_members")
+}
+
+// ============================================================================
+// 9. ZONES
+// ============================================================================
+model Zone {
+  id              String   @id @default(uuid())
+  circleId        String   @map("circle_id")
+  zoneType        String   @map("zone_type")  // Use ZoneType enum values as strings for flexibility
+  displayName     String   @map("display_name")
+  zoneGroup       String   @map("zone_group")  // front, back, side, interior
+  icon            String   @default("📍")
+  description     String?
+  isEnabled       Boolean  @default(true) @map("is_enabled")
+  displayOrder    Int      @default(0) @map("display_order")
+  isPublicFacing  Boolean  @default(false) @map("is_public_facing")
+  isHighValueArea Boolean  @default(false) @map("is_high_value_area")
+  // Phase 2: Privacy level for fusion rules
+  privacyLevel    PrivacyLevel @default(SEMI_PRIVATE) @map("privacy_level")
+  // Phase 2: Entry point flag for break-in detection
+  isEntryPoint    Boolean  @default(false) @map("is_entry_point")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  circle          Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  events          Event[]
+  sensors         Sensor[]
+  sensorEvents    SensorEvent[]  // Phase 2
+
+  @@unique([circleId, zoneType])
+  @@index([circleId, isEnabled])
+  @@map("zones")
+}
+
+// ============================================================================
+// 10. EVENTS (Phase 1B: 新增 sourceType, sensorId 等字段)
+// ============================================================================
+model Event {
+  id                    String          @id @default(uuid())
+  circleId              String          @map("circle_id")
+  zoneId                String          @map("zone_id")
+  creatorId             String          @map("creator_id")
+  eventType             String          @map("event_type")
+  title                 String
+  description           String?
+  severity              EventSeverity   @default(MEDIUM)
+  status                EventStatus     @default(OPEN)
+  occurredAt            DateTime        @default(now()) @map("occurred_at")
+  occurredEndAt         DateTime?       @map("occurred_end_at")
+  policeReported        Boolean         @default(false) @map("police_reported")
+  policeReportedAt      DateTime?       @map("police_reported_at")
+  policeReportNumber    String?         @map("police_report_number")
+  lossDescription       String?         @map("loss_description")
+  estimatedLossAmount   Decimal?        @map("estimated_loss_amount") @db.Decimal(10, 2)
+  // Phase 1B fields
+  sourceType            EventSourceType @default(MANUAL) @map("source_type")
+  sensorId              String?         @map("sensor_id")
+  sensorType            SensorType?     @map("sensor_type")
+  externalEventId       String?         @map("external_event_id")
+  // Phase 2: Fusion fields
+  isSecurityEvent       Boolean         @default(true) @map("is_security_event")
+  primaryTrackId        String?         @map("primary_track_id")
+  pathSummary           String?         @map("path_summary")
+  dwellSecondsPrivate   Int?            @map("dwell_seconds_private")
+  fusionRule            String?         @map("fusion_rule")  // e.g., "R1_BREAKIN_DOOR_PIR"
+  contributingSensorIds String[]        @map("contributing_sensor_ids")
+  // Phase 2: ML feedback fields
+  mlScore               Float?          @map("ml_score")      // 0-1 prediction score
+  mlSuppressed          Boolean         @default(false) @map("ml_suppressed")
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+  deletedAt             DateTime?       @map("deleted_at")
+  
+  circle                Circle          @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  zone                  Zone            @relation(fields: [zoneId], references: [id])
+  creator               CircleMember    @relation("EventCreator", fields: [creatorId], references: [id])
+  sensor                Sensor?         @relation(fields: [sensorId], references: [id])
+  primaryTrack          Track?          @relation("EventPrimaryTrack", fields: [primaryTrackId], references: [id])
+  notes                 EventNote[]
+  media                 EventMedia[]
+  feedbacks             EventFeedback[]  // Phase 2: ML feedback
+  mlFeature             EventMLFeature?  // Phase 2: ML features
+
+  @@index([circleId, createdAt])
+  @@index([circleId, status])
+  @@map("events")
+}
+
+// ============================================================================
+// 11. EVENT NOTES
+// ============================================================================
+model EventNote {
+  id           String        @id @default(uuid())
+  eventId      String        @map("event_id")
+  authorId     String?       @map("author_id")
+  noteType     NoteType      @default(COMMENT) @map("note_type")
+  reactionCode String?       @map("reaction_code")
+  body         String
+  createdAt    DateTime      @default(now()) @map("created_at")
+  
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author       CircleMember? @relation(fields: [authorId], references: [id])
+  media        EventMedia[]
+
+  @@index([eventId, createdAt])
+  @@map("event_notes")
+}
+
+// ============================================================================
+// 12. EVENT MEDIA
+// ============================================================================
+model EventMedia {
+  id                String          @id @default(uuid())
+  eventId           String          @map("event_id")
+  noteId            String?         @map("note_id")
+  uploaderId        String          @map("uploader_id")
+  mediaType         MediaType       @map("media_type")
+  sourceType        MediaSourceType @default(USER_UPLOAD) @map("source_type")
+  fileName          String          @map("file_name")
+  fileUrl           String          @map("file_url")
+  thumbnailUrl      String?         @map("thumbnail_url")
+  mimeType          String          @map("mime_type")
+  fileSizeBytes     Int             @map("file_size_bytes")
+  durationSec       Int?            @map("duration_sec")
+  originalFileHash  String?         @map("original_file_hash")
+  originalCreatedAt DateTime?       @map("original_created_at")
+  deviceInfo        String?         @map("device_info")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  
+  event             Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  note              EventNote?      @relation(fields: [noteId], references: [id])
+  uploader          CircleMember    @relation(fields: [uploaderId], references: [id])
+
+  @@index([eventId])
+  @@map("event_media")
+}
+
+// ============================================================================
+// 13. ZONE TYPE CONFIGS
+// ============================================================================
+model ZoneTypeConfig {
+  id                  String   @id @default(uuid())
+  value               String   @unique
+  label               String
+  labelEn             String   @map("label_en")
+  zoneGroup           String   @map("zone_group")
+  icon                String
+  description         String?
+  descriptionEn       String?  @map("description_en")
+  supportedHouseTypes String[] @map("supported_house_types")
+  defaultEnabled      Boolean  @default(false) @map("default_enabled")
+  isPublicFacing      Boolean  @default(false) @map("is_public_facing")
+  isHighValueArea     Boolean  @default(false) @map("is_high_value_area")
+  displayOrder        Int      @default(0) @map("display_order")
+
+  @@map("zone_type_configs")
+}
+
+// ============================================================================
+// 14. EVENT TYPE CONFIGS
+// ============================================================================
+model EventTypeConfig {
+  id            String        @id @default(uuid())
+  value         String        @unique
+  label         String
+  labelEn       String        @map("label_en")
+  icon          String
+  severity      EventSeverity @default(MEDIUM)
+  description   String?
+  descriptionEn String?       @map("description_en")
+  allowedZones  String[]      @map("allowed_zones")
+  displayOrder  Int           @default(0) @map("display_order")
+
+  @@map("event_type_configs")
+}
+
+// ============================================================================
+// Phase 1B: 15. INTEGRATIONS (外部集成)
+// ============================================================================
+model Integration {
+  id            String          @id @default(uuid())
+  circleId      String          @map("circle_id")
+  name          String
+  type          IntegrationType @default(HOME_ASSISTANT)
+  webhookToken  String          @unique @default(uuid()) @map("webhook_token")
+  webhookSecret String?         @map("webhook_secret")
+  baseUrl       String?         @map("base_url")
+  accessToken   String?         @map("access_token")
+  isActive      Boolean         @default(true) @map("is_active")
+  lastSyncAt    DateTime?       @map("last_sync_at")
+  deviceCount   Int             @default(0) @map("device_count")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+  
+  circle        Circle          @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  sensors       Sensor[]
+
+  @@index([circleId])
+  @@index([webhookToken])
+  @@map("integrations")
+}
+
+// ============================================================================
+// Phase 1B: 16. SENSORS (传感器)
+// ============================================================================
+model Sensor {
+  id            String       @id @default(uuid())
+  circleId      String       @map("circle_id")
+  integrationId String       @map("integration_id")
+  zoneId        String?      @map("zone_id")
+  externalId    String       @map("external_id")
+  name          String
+  sensorType    SensorType   @default(OTHER) @map("sensor_type")
+  status        SensorStatus @default(UNKNOWN)
+  lastState     String?      @map("last_state")
+  lastStateAt   DateTime?    @map("last_state_at")
+  batteryLevel  Int?         @map("battery_level")
+  isEnabled     Boolean      @default(true) @map("is_enabled")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+  
+  circle        Circle       @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  integration   Integration  @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+  zone          Zone?        @relation(fields: [zoneId], references: [id])
+  events        Event[]
+  sensorEvents  SensorEvent[]  // Phase 2
+
+  @@unique([integrationId, externalId])
+  @@index([circleId])
+  @@map("sensors")
+}
+
+// ============================================================================
+// Phase 2: 17. SENSOR EVENTS (Raw sensor triggers)
+// ============================================================================
+model SensorEvent {
+  id          String   @id @default(uuid())
+  circleId    String   @map("circle_id")
+  sensorId    String   @map("sensor_id")
+  zoneId      String?  @map("zone_id")
+  newState    String   @map("new_state")
+  oldState    String?  @map("old_state")
+  occurredAt  DateTime @map("occurred_at")
+  rawPayload  Json?    @map("raw_payload")
+  processed   Boolean  @default(false)
+  trackId     String?  @map("track_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  circle      Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  sensor      Sensor   @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  zone        Zone?    @relation(fields: [zoneId], references: [id])
+  track       Track?   @relation(fields: [trackId], references: [id])
+
+  @@index([circleId, occurredAt])
+  @@index([sensorId, occurredAt])
+  @@index([trackId])
+  @@map("sensor_events")
+}
+
+// ============================================================================
+// Phase 2: 18. TRACKS (Behavioral trajectory)
+// ============================================================================
+model Track {
+  id                  String        @id @default(uuid())
+  circleId            String        @map("circle_id")
+  homeId              String        @map("home_id")
+  objectType          ObjectType    @default(UNKNOWN) @map("object_type")
+  startTime           DateTime      @map("start_time")
+  endTime             DateTime      @map("end_time")
+  pathSummary         String?       @map("path_summary")
+  maxPrivacyLevel     PrivacyLevel? @map("max_privacy_level")
+  dwellSecondsPrivate Int?          @map("dwell_seconds_private")
+  segments            Json?         // [{zoneId, zoneType, tEnter, tLeave}, ...]
+  isClosed            Boolean       @default(false) @map("is_closed")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  circle              Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  home                Home          @relation(fields: [homeId], references: [id], onDelete: Cascade)
+  sensorEvents        SensorEvent[]
+  events              Event[]       @relation("EventPrimaryTrack")
+
+  @@index([circleId, startTime])
+  @@index([homeId])
+  @@map("tracks")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+}
+
+enum Platform {
+  IOS
+  ANDROID
+}
+
+enum HouseType {
+  DETACHED
+  SEMI
+  ROW
+  APARTMENT
+}
+
+enum OccupancyPattern {
+  NORMAL
+  DAYTIME_EMPTY
+  VACATION_MODE
+}
+
+enum MemberRole {
+  OWNER
+  HOUSEHOLD
+  NEIGHBOR
+  RELATIVE
+  OBSERVER
+}
+
+enum EventSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum EventStatus {
+  OPEN
+  ACKED
+  WATCHING
+  RESOLVED_OK
+  RESOLVED_WARNING
+  ESCALATED
+  FALSE_ALARM
+}
+
+enum NoteType {
+  REACTION
+  COMMENT
+  SYSTEM
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum MediaSourceType {
+  CAMERA_EXPORT
+  USER_UPLOAD
+  SCREENSHOT
+  EXTERNAL
+}
+
+// Phase 1B: New Enums
+enum HouseMode {
+  DISARMED
+  HOME
+  AWAY
+  NIGHT
+}
+
+// Phase 2: Zone types (from PRD)
+enum ZoneType {
+  // Entry points
+  FRONT_DOOR        // Main entrance
+  BACK_DOOR         // Back entrance
+  SIDE_DOOR         // Side entrance
+  GARAGE_ENTRANCE   // Garage entry point
+  
+  // Outdoor areas
+  FRONT_YARD        // Front yard area
+  BACK_YARD         // Backyard area
+  SIDE_YARD         // Side yard
+  DRIVEWAY          // Driveway
+  PORCH             // Front porch / covered entrance
+  PATIO             // Back patio / deck
+  
+  // Boundary areas
+  STREET_FRONT      // Street-facing area (public)
+  ALLEY_BEHIND      // Back alley
+  SIDE_ALLEY        // Side alley/path
+  FENCE_LINE        // Fence perimeter
+  
+  // Interior
+  LIVING_ROOM       // Living room
+  HALLWAY           // Hallway / corridor
+  STAIRS            // Stairway
+  GARAGE_INTERIOR   // Inside garage
+  BASEMENT          // Basement
+  
+  // Custom
+  CUSTOM            // User-defined zone
+}
+
+enum SensorType {
+  // Physical sensors
+  DOOR_CONTACT      // Door/window contact sensor
+  WINDOW_CONTACT    // Window contact sensor
+  LOCK              // Smart lock
+  PIR               // Passive infrared motion detector
+  GLASS_BREAK       // Glass break sensor
+  VIBRATION         // Vibration/shock sensor
+  SMOKE             // Smoke detector
+  CO_DETECTOR       // Carbon monoxide detector
+  WATER_LEAK        // Water leak sensor
+  
+  // Camera AI detections (from Reolink/UniFi/Ring/Frigate)
+  CAMERA_MOTION     // Basic motion detection
+  CAMERA_PERSON     // AI person detection
+  CAMERA_VEHICLE    // AI vehicle detection
+  CAMERA_PACKAGE    // AI package detection
+  CAMERA_ANIMAL     // AI animal/pet detection
+  
+  // Audio detections
+  MIC_UNUSUAL_NOISE // Unusual sound detected
+  MIC_BABY_CRY      // Baby cry detection
+  MIC_GLASS_BREAK   // Audio glass break detection
+  
+  // Generic
+  GENERIC_SENSOR    // Unknown or unclassified sensor
+  OTHER
+}
+
+enum SensorStatus {
+  ONLINE
+  OFFLINE
+  LOW_BATTERY
+  UNKNOWN
+}
+
+enum IntegrationType {
+  HOME_ASSISTANT
+  MQTT
+  OTHER
+}
+
+enum EventSourceType {
+  MANUAL
+  CAMERA
+  SENSOR
+  EXTERNAL
+  FUSION  // Phase 2: Created by FusionEngine
+}
+
+// Phase 2: Security event types (from PRD)
+enum SecurityEventType {
+  // High priority security events
+  BREAK_IN_ATTEMPT      // Entry attempt with door/window/glass + indoor activity
+  PERIMETER_DAMAGE      // Fence/gate/window damage without clear entry
+  
+  // Suspicious activity
+  SUSPICIOUS_PERSON     // Person loitering in private/semi-private zones
+  SUSPICIOUS_VEHICLE    // Vehicle loitering in driveway/street
+  
+  // Audio events
+  UNUSUAL_NOISE         // Glass break sound, loud noise, etc.
+  
+  // Package events
+  PACKAGE_DELIVERED     // Package appeared at door
+  PACKAGE_TAKEN         // Package removed (normal or suspicious)
+  
+  // Safety events
+  FIRE_DETECTED         // Smoke/fire alarm
+  CO_DETECTED           // Carbon monoxide alarm
+  WATER_LEAK_DETECTED   // Water leak detected
+  
+  // Generic
+  MOTION_DETECTED       // Basic motion (low priority)
+  CUSTOM_EVENT          // User-defined event type
+}
+
+// Phase 2: Object type for tracks
+enum ObjectType {
+  PERSON
+  VEHICLE
+  ANIMAL
+  PACKAGE
+  UNKNOWN
+}
+
+// Phase 2: Privacy level for zones
+enum PrivacyLevel {
+  PUBLIC        // Sidewalk, street-facing areas
+  SEMI_PRIVATE  // Front yard, driveway
+  PRIVATE       // Backyard, side yards
+  RESTRICTED    // Interior, garage interior
+}
+
+// Phase 2: ML Feedback label
+enum FeedbackLabel {
+  FALSE_ALARM   // User marked as false alarm / not useful
+  USEFUL        // User marked as useful notification
+}
+
+// ============================================================================
+// Phase 2: 20. EVENT FEEDBACK (ML Feedback)
+// User feedback on event notifications for ML training
+// ============================================================================
+model EventFeedback {
+  id             String        @id @default(uuid())
+  circleId       String        @map("circle_id")
+  eventId        String        @map("event_id")
+  userId         String        @map("user_id")
+  label          FeedbackLabel
+  clientPlatform String?       @map("client_platform")  // 'ios' | 'web' | 'android'
+  note           String?                                 // Optional user note
+  createdAt      DateTime      @default(now()) @map("created_at")
+  
+  circle         Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  event          Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])  // One feedback per user per event
+  @@index([circleId, createdAt])
+  @@index([eventId])
+  @@map("event_feedbacks")
+}
+
+// ============================================================================
+// Phase 2: 21. EVENT ML FEATURE (Cached features for ML)
+// Pre-computed features for ML model training and inference
+// ============================================================================
+model EventMLFeature {
+  id                  String   @id @default(uuid())
+  eventId             String   @unique @map("event_id")
+  circleId            String   @map("circle_id")
+  homeId              String   @map("home_id")
+  
+  // Event attributes
+  eventType           String   @map("event_type")
+  sourceType          String   @map("source_type")
+  severity            String
+  
+  // Context
+  houseMode           String   @map("house_mode")
+  hourBucket          Int      @map("hour_bucket")      // 0-23
+  weekday             Int                               // 0-6 (Sun=0)
+  
+  // Sensor combination flags
+  hasDoorContact      Boolean  @default(false) @map("has_door_contact")
+  hasInsideMotion     Boolean  @default(false) @map("has_inside_motion")
+  hasCameraPerson     Boolean  @default(false) @map("has_camera_person")
+  hasGlassBreak       Boolean  @default(false) @map("has_glass_break")
+  sensorCount         Int      @default(0) @map("sensor_count")
+  
+  // Track/behavior features
+  hasPrivateZone      Boolean  @default(false) @map("has_private_zone")
+  dwellPrivateSec     Int      @default(0) @map("dwell_private_sec")
+  dwellTotalSec       Int      @default(0) @map("dwell_total_sec")
+  
+  // Historical stats (updated periodically)
+  histFalseRateType   Float?   @map("hist_false_rate_type")    // False alarm rate for this eventType in this house
+  histFalseRateSensor Float?   @map("hist_false_rate_sensor")  // False alarm rate for sensors involved
+  histFalseRateHour   Float?   @map("hist_false_rate_hour")    // False alarm rate for this hour bucket
+  
+  createdAt           DateTime @default(now()) @map("created_at")
+  
+  event               Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  circle              Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+
+  @@index([circleId, eventType])
+  @@index([circleId, houseMode])
+  @@map("event_ml_features")
+}

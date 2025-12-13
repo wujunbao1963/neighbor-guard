@@ -1,0 +1,399 @@
+// ============================================================================
+// NeighborGuard MVP - Prisma Database Schema
+// Phase 1: Database Foundation
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// 1. USERS (用户表)
+// ============================================================================
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  displayName   String    @map("display_name")
+  avatarUrl     String?   @map("avatar_url")
+  phone         String?
+  
+  // Admin role: SUPER_ADMIN cannot be deleted, ADMIN can manage whitelist
+  adminRole     AdminRole? @map("admin_role")
+  
+  isActive      Boolean   @default(true) @map("is_active")
+  emailVerified Boolean   @default(false) @map("email_verified")
+  lastLoginAt   DateTime? @map("last_login_at")
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  
+  ownedCircles      Circle[]       @relation("CircleOwner")
+  circleMemberships CircleMember[]
+  authCodes         AuthCode[]
+  refreshTokens     RefreshToken[]
+  
+  @@map("users")
+}
+
+enum AdminRole {
+  SUPER_ADMIN  // 超级管理员，不可删除
+  ADMIN        // 普通管理员，可管理白名单
+}
+
+// ============================================================================
+// 2. EMAIL WHITELIST (邮箱白名单)
+// ============================================================================
+model EmailWhitelist {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  notes     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@map("email_whitelist")
+}
+
+// ============================================================================
+// 3. AUTH CODES (验证码)
+// ============================================================================
+model AuthCode {
+  id        String    @id @default(uuid())
+  email     String
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  attempts  Int       @default(0)
+  
+  userId    String?   @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  @@index([email, expiresAt])
+  @@map("auth_codes")
+}
+
+// ============================================================================
+// 4. REFRESH TOKENS (刷新令牌)
+// ============================================================================
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique @map("token_hash")
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  deviceInfo String?  @map("device_info")
+  
+  createdAt DateTime  @default(now()) @map("created_at")
+  
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================================
+// 5. CIRCLES (Circle/家庭单位)
+// ============================================================================
+model Circle {
+  id          String    @id @default(uuid())
+  ownerId     String    @map("owner_id")
+  owner       User      @relation("CircleOwner", fields: [ownerId], references: [id])
+  displayName String    @map("display_name")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+  
+  home        Home?
+  members     CircleMember[]
+  zones       Zone[]
+  events      Event[]
+  
+  @@index([ownerId])
+  @@map("circles")
+}
+
+// ============================================================================
+// 6. HOMES (房屋信息)
+// ============================================================================
+model Home {
+  id            String   @id @default(uuid())
+  circleId      String   @unique @map("circle_id")
+  circle        Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  
+  displayName   String   @map("display_name")
+  
+  country       String   @default("CA")
+  region        String   @default("")
+  city          String   @default("")
+  postalCode    String   @default("") @map("postal_code")
+  addressLine1  String?  @map("address_line1")
+  addressLine2  String?  @map("address_line2")
+  
+  houseType     HouseType @default(DETACHED) @map("house_type")
+  hasDriveway   Boolean   @default(true) @map("has_driveway")
+  hasBackYard   Boolean   @default(true) @map("has_back_yard")
+  hasBackAlley  Boolean   @default(false) @map("has_back_alley")
+  
+  occupancyPattern OccupancyPattern @default(NORMAL) @map("occupancy_pattern")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  @@map("homes")
+}
+
+enum HouseType {
+  DETACHED
+  SEMI
+  ROW
+  APARTMENT
+}
+
+enum OccupancyPattern {
+  NORMAL
+  DAYTIME_EMPTY
+  VACATION_MODE
+}
+
+// ============================================================================
+// 7. CIRCLE MEMBERS (成员关系)
+// ============================================================================
+model CircleMember {
+  id          String     @id @default(uuid())
+  circleId    String     @map("circle_id")
+  circle      Circle     @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  userId      String     @map("user_id")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role        MemberRole @default(NEIGHBOR)
+  displayName String?    @map("display_name")
+  
+  notifyOnHighSeverity   Boolean @default(true) @map("notify_high")
+  notifyOnMediumSeverity Boolean @default(true) @map("notify_medium")
+  notifyOnLowSeverity    Boolean @default(false) @map("notify_low")
+  canViewAllEventMedia   Boolean @default(true) @map("can_view_media")
+  
+  joinedAt    DateTime   @default(now()) @map("joined_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+  leftAt      DateTime?  @map("left_at")
+  
+  createdEvents Event[]      @relation("EventCreator")
+  eventNotes    EventNote[]
+  eventMedia    EventMedia[]
+  
+  @@unique([circleId, userId])
+  @@index([userId])
+  @@map("circle_members")
+}
+
+enum MemberRole {
+  OWNER       // 屋主
+  HOUSEHOLD   // 同住人
+  NEIGHBOR    // 邻居
+  RELATIVE    // 亲属（不住一起）
+  OBSERVER    // 观察者
+}
+
+// ============================================================================
+// 8. ZONES (防区配置)
+// ============================================================================
+model Zone {
+  id              String   @id @default(uuid())
+  circleId        String   @map("circle_id")
+  circle          Circle   @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  
+  zoneType        String   @map("zone_type")
+  displayName     String   @map("display_name")
+  zoneGroup       String   @map("zone_group")
+  icon            String   @default("📍")
+  description     String?
+  
+  isEnabled       Boolean  @default(true) @map("is_enabled")
+  displayOrder    Int      @default(0) @map("display_order")
+  isPublicFacing  Boolean  @default(false) @map("is_public_facing")
+  isHighValueArea Boolean  @default(false) @map("is_high_value_area")
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  
+  events          Event[]
+  
+  @@unique([circleId, zoneType])
+  @@index([circleId, isEnabled])
+  @@map("zones")
+}
+
+// ============================================================================
+// 9. EVENTS (安全事件)
+// ============================================================================
+model Event {
+  id          String        @id @default(uuid())
+  circleId    String        @map("circle_id")
+  circle      Circle        @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  zoneId      String        @map("zone_id")
+  zone        Zone          @relation(fields: [zoneId], references: [id])
+  creatorId   String        @map("creator_id")
+  creator     CircleMember  @relation("EventCreator", fields: [creatorId], references: [id])
+  
+  eventType   String        @map("event_type")
+  title       String
+  description String?
+  severity    EventSeverity @default(MEDIUM)
+  status      EventStatus   @default(OPEN)
+  
+  occurredAt    DateTime  @default(now()) @map("occurred_at")
+  occurredEndAt DateTime? @map("occurred_end_at")
+  
+  policeReported     Boolean   @default(false) @map("police_reported")
+  policeReportedAt   DateTime? @map("police_reported_at")
+  policeReportNumber String?   @map("police_report_number")
+  
+  lossDescription     String?  @map("loss_description")
+  estimatedLossAmount Decimal? @map("estimated_loss_amount") @db.Decimal(10, 2)
+  
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  
+  notes EventNote[]
+  media EventMedia[]
+  
+  @@index([circleId, status])
+  @@index([circleId, createdAt])
+  @@map("events")
+}
+
+enum EventSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum EventStatus {
+  OPEN
+  ACKED
+  WATCHING
+  RESOLVED_OK
+  RESOLVED_WARNING
+  ESCALATED
+  FALSE_ALARM
+}
+
+// ============================================================================
+// 10. EVENT NOTES (事件时间线)
+// ============================================================================
+model EventNote {
+  id           String        @id @default(uuid())
+  eventId      String        @map("event_id")
+  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  authorId     String?       @map("author_id")
+  author       CircleMember? @relation(fields: [authorId], references: [id])
+  
+  noteType     NoteType      @default(COMMENT) @map("note_type")
+  reactionCode String?       @map("reaction_code")
+  body         String
+  
+  createdAt    DateTime      @default(now()) @map("created_at")
+  
+  media        EventMedia[]
+  
+  @@index([eventId, createdAt])
+  @@map("event_notes")
+}
+
+enum NoteType {
+  REACTION
+  COMMENT
+  SYSTEM
+}
+
+// ============================================================================
+// 11. EVENT MEDIA (事件附件)
+// ============================================================================
+model EventMedia {
+  id           String          @id @default(uuid())
+  eventId      String          @map("event_id")
+  event        Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  noteId       String?         @map("note_id")
+  note         EventNote?      @relation(fields: [noteId], references: [id])
+  uploaderId   String          @map("uploader_id")
+  uploader     CircleMember    @relation(fields: [uploaderId], references: [id])
+  
+  mediaType    MediaType       @map("media_type")
+  sourceType   MediaSourceType @default(USER_UPLOAD) @map("source_type")
+  
+  fileName      String  @map("file_name")
+  fileUrl       String  @map("file_url")
+  thumbnailUrl  String? @map("thumbnail_url")
+  mimeType      String  @map("mime_type")
+  fileSizeBytes Int     @map("file_size_bytes")
+  durationSec   Int?    @map("duration_sec")
+  
+  originalFileHash  String?   @map("original_file_hash")
+  originalCreatedAt DateTime? @map("original_created_at")
+  deviceInfo        String?   @map("device_info")
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@index([eventId])
+  @@map("event_media")
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+}
+
+enum MediaSourceType {
+  CAMERA_EXPORT
+  USER_UPLOAD
+  SCREENSHOT
+  EXTERNAL
+}
+
+// ============================================================================
+// 12. ZONE TYPE CONFIG (Zone类型配置 - 系统数据)
+// ============================================================================
+model ZoneTypeConfig {
+  id                  String   @id @default(uuid())
+  value               String   @unique
+  label               String
+  labelEn             String   @map("label_en")
+  zoneGroup           String   @map("zone_group")
+  icon                String
+  description         String?
+  descriptionEn       String?  @map("description_en")
+  supportedHouseTypes String[] @map("supported_house_types")
+  defaultEnabled      Boolean  @default(false) @map("default_enabled")
+  isPublicFacing      Boolean  @default(false) @map("is_public_facing")
+  isHighValueArea     Boolean  @default(false) @map("is_high_value_area")
+  displayOrder        Int      @default(0) @map("display_order")
+  
+  @@map("zone_type_configs")
+}
+
+// ============================================================================
+// 13. EVENT TYPE CONFIG (事件类型配置 - 系统数据)
+// ============================================================================
+model EventTypeConfig {
+  id            String        @id @default(uuid())
+  value         String        @unique
+  label         String
+  labelEn       String        @map("label_en")
+  icon          String
+  severity      EventSeverity @default(MEDIUM)
+  description   String?
+  descriptionEn String?       @map("description_en")
+  allowedZones  String[]      @map("allowed_zones")
+  displayOrder  Int           @default(0) @map("display_order")
+  
+  @@map("event_type_configs")
+}
