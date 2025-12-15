@@ -1,0 +1,3020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NG Edge Console v2 - Security Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --success: #51cf66;
+            --warning: #fab005;
+            --danger: #fa5252;
+            --info: #339af0;
+            --bg-dark: #1a1f2e;
+            --bg-light: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #868e96;
+            --border: #e9ecef;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        
+        .edge-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        .cloud-status {
+            text-align: right;
+        }
+        
+        .cloud-status-indicator {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        /* Alarm State Widget */
+        .alarm-state-widget {
+            background: linear-gradient(135deg, #ff8787 0%, #ff6b6b 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid rgba(0,0,0,0.1);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .alarm-state-widget.armed {
+            background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        
+        .alarm-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .alarm-icon {
+            font-size: 48px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .alarm-info h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        
+        .countdown-timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 64px;
+            font-weight: 700;
+            min-width: 150px;
+            text-align: center;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .alarm-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .alarm-btn {
+            padding: 14px 28px;
+            border: 2px solid white;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        
+        .alarm-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .alarm-btn.primary {
+            background: white;
+            color: var(--danger);
+        }
+        
+        /* Mode Selector */
+        .mode-selector {
+            background: var(--bg-light);
+            padding: 20px 32px;
+            display: flex;
+            gap: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 16px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .mode-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(102,126,234,0.15);
+        }
+        
+        .mode-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102,126,234,0.25);
+        }
+        
+        .mode-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .mode-name {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
+            padding: 0 32px;
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 18px 28px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        
+        .tab:hover {
+            color: var(--primary);
+            background: white;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+        
+        /* Content */
+        .content {
+            padding: 40px;
+            min-height: 600px;
+        }
+        
+        .page {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(102,126,234,0.2);
+        }
+        
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 12px 0;
+        }
+        
+        .stat-label {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        /* Event Timeline */
+        .event-timeline {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .timeline-header {
+            padding: 24px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-light);
+        }
+        
+        .timeline-header h3 {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .timeline-filters {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .event-item {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 20px;
+            transition: background 0.2s;
+        }
+        
+        .event-item:hover {
+            background: var(--bg-light);
+        }
+        
+        .event-indicator {
+            width: 6px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        
+        .event-indicator.high { background: var(--danger); }
+        .event-indicator.medium { background: var(--warning); }
+        .event-indicator.low { background: var(--info); }
+        
+        .event-content {
+            flex: 1;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .event-title {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+        
+        .event-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 12px;
+            text-transform: uppercase;
+        }
+        
+        .event-status.confirmed {
+            background: #d3f9d8;
+            color: #2b8a3e;
+        }
+        
+        .event-status.candidate {
+            background: #fff3bf;
+            color: #e67700;
+        }
+        
+        .event-time {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .event-trace {
+            font-size: 15px;
+            color: var(--text-primary);
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+        
+        .event-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .event-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .event-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .event-btn.feedback {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Devices Grid */
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+        
+        .device-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+        
+        .device-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(102,126,234,0.15);
+        }
+        
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+        
+        .device-icon-wrapper {
+            font-size: 40px;
+        }
+        
+        .device-status-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        
+        .device-status-dot.online { background: var(--success); }
+        .device-status-dot.offline { background: var(--danger); }
+        .device-status-dot.degraded { background: var(--warning); }
+        
+        .device-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        
+        .device-details {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .device-health {
+            padding: 16px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .health-bar {
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .health-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+        
+        .health-fill.good { background: linear-gradient(90deg, var(--success), #37b24d); }
+        .health-fill.fair { background: linear-gradient(90deg, var(--warning), #fd7e14); }
+        .health-fill.poor { background: linear-gradient(90deg, var(--danger), #e03131); }
+        
+        .health-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        
+        .health-score {
+            font-weight: 700;
+        }
+        
+        .device-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .metric {
+            font-size: 14px;
+        }
+        
+        .metric-label {
+            color: var(--text-secondary);
+        }
+        
+        .metric-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .device-capabilities {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .capability-tag {
+            padding: 6px 10px;
+            background: #e7f5ff;
+            color: #1971c2;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        /* Topology */
+        .topology-container {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .topology-canvas {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 40px;
+            min-height: 500px;
+        }
+        
+        .zone-group {
+            margin-bottom: 40px;
+        }
+        
+        .zone-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .zone-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .zone-node {
+            background: white;
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            min-width: 160px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .zone-node:hover {
+            border-color: var(--primary);
+            transform: scale(1.08);
+            box-shadow: 0 8px 24px rgba(102,126,234,0.25);
+        }
+        
+        .zone-node.triggered {
+            border-color: var(--danger);
+            background: #fff5f5;
+            animation: pulse 1s infinite;
+        }
+        
+        .node-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .node-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        
+        .node-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        
+        .signal-pulse {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            top: -12px;
+            right: -12px;
+            animation: signal-pulse 2s infinite;
+        }
+        
+        @keyframes signal-pulse {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(0.9); opacity: 1; }
+        }
+        
+        .signal-pulse.person { background: var(--info); box-shadow: 0 0 20px var(--info); }
+        .signal-pulse.door { background: var(--danger); box-shadow: 0 0 20px var(--danger); }
+        .signal-pulse.motion { background: var(--warning); box-shadow: 0 0 20px var(--warning); }
+        
+        .zone-arrow {
+            font-size: 28px;
+            color: var(--text-secondary);
+        }
+        
+        /* Contract Layers */
+        .contract-layers {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .layer {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border-left: 6px solid var(--border);
+            transition: all 0.2s;
+        }
+        
+        .layer:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        
+        .layer.signal { border-left-color: var(--info); }
+        .layer.evidence { border-left-color: var(--warning); }
+        .layer.event { border-left-color: var(--success); }
+        
+        .layer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .layer-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .layer-version {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+        
+        .layer-description {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+        
+        .layer-examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .example-tag {
+            padding: 8px 14px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        /* Disarm Panel */
+        .disarm-panel {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .disarm-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .disarm-method {
+            background: var(--bg-light);
+            border: 3px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .disarm-method:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        
+        .disarm-method.active {
+            border-color: var(--success);
+            background: #d3f9d8;
+        }
+        
+        .method-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .method-icon {
+            font-size: 36px;
+        }
+        
+        .method-name {
+            font-size: 18px;
+            font-weight: 700;
+            flex: 1;
+        }
+        
+        .method-status {
+            font-size: 12px;
+            padding: 6px 12px;
+            background: white;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+        
+        .method-description {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        /* Pre-intrusion Settings */
+        .tier-setting {
+            padding: 24px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .tier-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .tier-toggle {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: #dee2e6;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .tier-toggle.active {
+            background: var(--success);
+        }
+        
+        .tier-toggle::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .tier-toggle.active::after {
+            left: 30px;
+        }
+        
+        .tier-description {
+            font-size: 15px;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        
+        .tier-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .action-tag {
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        /* Neighbor Actions */
+        .neighbor-actions-panel {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+        
+        .action-buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .neighbor-action-btn {
+            padding: 20px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        
+        .neighbor-action-btn:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.15);
+        }
+        
+        .action-btn-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        
+        .action-btn-label {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        
+        .action-btn-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102,126,234,0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+        
+        /* Utility */
+        .alert-box {
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 6px solid;
+        }
+        
+        .alert-box.info {
+            background: #e7f5ff;
+            border-color: var(--info);
+        }
+        
+        .alert-box.warning {
+            background: #fff3bf;
+            border-color: var(--warning);
+        }
+        
+        .alert-box.danger {
+            background: #fff5f5;
+            border-color: var(--danger);
+        }
+        
+        .alert-box.success {
+            background: #d3f9d8;
+            border-color: var(--success);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1>🛡️ NG Edge Console v2</h1>
+                <div class="edge-id">edge-7a3f9c12-4b8d-11ef-9f2a-0242ac120002</div>
+            </div>
+            <div class="cloud-status">
+                <div class="cloud-status-indicator">☁️ Connected</div>
+                <div style="font-size: 13px; opacity: 0.9; margin-top: 4px;">Policy Pack v2.1.3 • Synced 2m ago</div>
+            </div>
+        </div>
+        
+        <!-- Alarm State Widget -->
+        <div class="alarm-state-widget pending">
+            <div class="alarm-status">
+                <div class="alarm-icon">⏱️</div>
+                <div class="alarm-info">
+                    <h2>Entry Delay - Disarm Now!</h2>
+                    <p>Back Door opened • Zone: Z4 Back Door</p>
+                </div>
+            </div>
+            <div class="countdown-timer">0:43</div>
+            <div class="alarm-actions">
+                <button class="alarm-btn primary">🔓 Disarm with PIN</button>
+                <button class="alarm-btn">📱 Open Mobile App</button>
+            </div>
+        </div>
+        
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <div class="mode-btn">
+                <div class="mode-icon">🏠</div>
+                <div class="mode-name">HOME</div>
+            </div>
+            <div class="mode-btn active">
+                <div class="mode-icon">🚪</div>
+                <div class="mode-name">AWAY</div>
+            </div>
+            <div class="mode-btn">
+                <div class="mode-icon">🌙</div>
+                <div class="mode-name">NIGHT</div>
+            </div>
+            <div class="mode-btn">
+                <div class="mode-icon">🔓</div>
+                <div class="mode-name">DISARMED</div>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <div class="tab active">📊 Overview</div>
+            <div class="tab">🚨 Events</div>
+            <div class="tab">📝 Feedback</div>
+            <div class="tab">🧪 Drills & Tests</div>
+            <div class="tab">🔍 Event Analysis</div>
+            <div class="tab">📡 Signals</div>
+            <div class="tab">📹 Devices</div>
+            <div class="tab">🗺️ Topology</div>
+            <div class="tab">⚙️ Settings</div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content">
+            <!-- Overview Page -->
+            <div class="page active">
+                <h2 class="section-title">System Overview</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📹</div>
+                        <div class="stat-value">6/8</div>
+                        <div class="stat-label">Devices Online</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🚨</div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Events Today (2 Confirmed)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">Awaiting Feedback</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value">87%</div>
+                        <div class="stat-label">Drills Pass Rate (13/15)</div>
+                    </div>
+                </div>
+                
+                <h2 class="section-title">Recent Events</h2>
+                <div class="event-timeline">
+                    <div class="timeline-header">
+                        <h3>Event Timeline</h3>
+                        <div class="timeline-filters">
+                            <button class="filter-btn active">All</button>
+                            <button class="filter-btn">Confirmed</button>
+                            <button class="filter-btn">Candidate</button>
+                            <button class="filter-btn">Needs Feedback</button>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-indicator high"></div>
+                        <div class="event-content">
+                            <div class="event-header">
+                                <div>
+                                    <span class="event-title">🚨 Break-in Attempt</span>
+                                    <span class="event-status confirmed">Confirmed</span>
+                                </div>
+                                <div class="event-time">2 min ago</div>
+                            </div>
+                            <div class="event-trace">
+                                Person detected in Z5 (Back Yard) → moved to Z4 (Back Door) → DOOR_OPEN at EP-BACK → MOTION in Z7 (Indoor Hallway). <strong>Confidence: 94%</strong>
+                            </div>
+                            <div class="event-actions">
+                                <button class="event-btn feedback">📝 Provide Feedback</button>
+                                <button class="event-btn">🎬 View Replay</button>
+                                <button class="event-btn">📊 View Topology</button>
+                                <button class="event-btn">🤝 Share with Neighbors</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-indicator medium"></div>
+                        <div class="event-content">
+                            <div class="event-header">
+                                <div>
+                                    <span class="event-title">👁️ Suspicious Person Loitering</span>
+                                    <span class="event-status candidate">Candidate</span>
+                                </div>
+                                <div class="event-time">1 hour ago</div>
+                            </div>
+                            <div class="event-trace">
+                                Person detected in Z2 (Front Porch) for 78 seconds, approached EP-FRONT twice without opening. Deterrence: Light activated. <strong>Confidence: 71%</strong>
+                            </div>
+                            <div class="event-actions">
+                                <button class="event-btn feedback">📝 Provide Feedback</button>
+                                <button class="event-btn">🎬 View Replay</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-indicator low"></div>
+                        <div class="event-content">
+                            <div class="event-header">
+                                <div>
+                                    <span class="event-title">📦 Package Delivered</span>
+                                    <span class="event-status confirmed">Confirmed</span>
+                                </div>
+                                <div class="event-time">3 hours ago</div>
+                            </div>
+                            <div class="event-trace">
+                                PERSON + VEHICLE in Z1 (Doorbell Zone) → PACKAGE_PLACED detected → departure in 12s. <strong>Confidence: 96%</strong>
+                            </div>
+                            <div class="event-actions">
+                                <button class="event-btn">✅ Package Secured</button>
+                                <button class="event-btn">🎬 View Replay</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Events Page -->
+            <div class="page">
+                <h2 class="section-title">All Events</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Complete event history with filtering, feedback, and replay capabilities</p>
+                <div class="event-timeline">
+                    <div class="timeline-header">
+                        <h3>Event History</h3>
+                        <div class="timeline-filters">
+                            <button class="filter-btn active">All</button>
+                            <button class="filter-btn">Today</button>
+                            <button class="filter-btn">This Week</button>
+                            <button class="filter-btn">This Month</button>
+                        </div>
+                    </div>
+                    <div style="padding: 40px; text-align: center; color: var(--text-secondary);">
+                        <div style="font-size: 64px; margin-bottom: 16px;">📋</div>
+                        <p>Full event history with pagination would be displayed here</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feedback Page -->
+            <div class="page">
+                <h2 class="section-title">Event Feedback & Training</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Label events as True Positive (TP), False Positive (FP), or Missed (MISS) to improve detection accuracy</p>
+                
+                <div class="alert-box info" style="margin-bottom: 32px;">
+                    <strong>📊 Feedback Stats:</strong> You've provided 23 feedbacks this month (18 TP, 3 FP, 2 MISS). This helps train the model and improve accuracy for everyone.
+                </div>
+                
+                <div class="event-timeline">
+                    <div class="timeline-header">
+                        <h3>Events Awaiting Feedback (5)</h3>
+                        <div class="timeline-filters">
+                            <button class="filter-btn active">Needs Feedback</button>
+                            <button class="filter-btn">Already Labeled</button>
+                            <button class="filter-btn">Reviewed Today</button>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-indicator medium"></div>
+                        <div class="event-content">
+                            <div class="event-header">
+                                <div>
+                                    <span class="event-title">👁️ Suspicious Person Loitering</span>
+                                    <span class="event-status candidate">Candidate</span>
+                                </div>
+                                <div class="event-time">1 hour ago</div>
+                            </div>
+                            <div class="event-trace">
+                                Person detected in Z2 (Front Porch) for 78 seconds, approached EP-FRONT twice without opening. Deterrence: Light activated. <strong>Confidence: 71%</strong>
+                            </div>
+                            
+                            <div style="margin: 20px 0; padding: 20px; background: var(--bg-light); border-radius: 12px;">
+                                <div style="font-size: 15px; font-weight: 700; margin-bottom: 12px;">📹 Review Evidence:</div>
+                                <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+                                    <button class="btn btn-secondary">🎬 Play 2-min Replay</button>
+                                    <button class="btn btn-secondary">📊 View Signal Timeline</button>
+                                    <button class="btn btn-secondary">🗺️ Show on Topology</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #fff3bf; padding: 20px; border-radius: 12px; border: 2px solid var(--warning);">
+                                <div style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">🏷️ Label this event:</div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                                    <button class="btn" style="background: var(--success); display: flex; flex-direction: column; align-items: center; padding: 16px;">
+                                        <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+                                        <div style="font-size: 14px;">TRUE POSITIVE</div>
+                                        <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">Correct detection</div>
+                                    </button>
+                                    <button class="btn" style="background: var(--danger); display: flex; flex-direction: column; align-items: center; padding: 16px;">
+                                        <div style="font-size: 32px; margin-bottom: 8px;">❌</div>
+                                        <div style="font-size: 14px;">FALSE POSITIVE</div>
+                                        <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">Wrong detection</div>
+                                    </button>
+                                    <button class="btn btn-secondary" style="display: flex; flex-direction: column; align-items: center; padding: 16px;">
+                                        <div style="font-size: 32px; margin-bottom: 8px;">⏭️</div>
+                                        <div style="font-size: 14px;">SKIP FOR NOW</div>
+                                        <div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">Review later</div>
+                                    </button>
+                                </div>
+                                <div style="margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
+                                    💡 After labeling: System saves Replay + generates TrainingRecord → uploaded to Cloud (privacy-preserving features only)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-indicator low"></div>
+                        <div class="event-content">
+                            <div class="event-header">
+                                <div>
+                                    <span class="event-title">🐕 Motion Detected</span>
+                                    <span class="event-status candidate">Candidate</span>
+                                </div>
+                                <div class="event-time">3 hours ago</div>
+                            </div>
+                            <div class="event-trace">
+                                MOTION in Z5 (Back Yard) for 15 seconds, no PERSON detected. <strong>Confidence: 42%</strong> (Low confidence - likely pet/wildlife)
+                            </div>
+                            <div style="margin: 16px 0;">
+                                <button class="btn btn-secondary">🎬 Play Replay</button>
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn" style="background: var(--success); font-size: 13px; padding: 8px 16px;">✅ TP</button>
+                                <button class="btn" style="background: var(--danger); font-size: 13px; padding: 8px 16px;">❌ FP (Pet)</button>
+                                <button class="btn btn-secondary" style="font-size: 13px; padding: 8px 16px;">⏭️ Skip</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 32px; background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">📈 Report a Missed Event (MISS)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">If the system failed to detect a real event, report it here to improve future detection</p>
+                    
+                    <div style="display: grid; gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px;">When did it happen?</label>
+                            <input type="datetime-local" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px;">What was it?</label>
+                            <select style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px;">
+                                <option>Break-in attempt</option>
+                                <option>Suspicious loitering</option>
+                                <option>Package theft</option>
+                                <option>Vehicle prowling</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px;">Which zone(s)?</label>
+                            <select style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px;">
+                                <option>Z1 Front Doorbell</option>
+                                <option>Z2 Front Porch</option>
+                                <option>Z4 Back Door</option>
+                                <option>Z5 Back Yard</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px;">Description (optional)</label>
+                            <textarea style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; min-height: 80px;" placeholder="Any additional context..."></textarea>
+                        </div>
+                        <button class="btn" style="width: fit-content;">📝 Submit MISS Report</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drills & Tests Page -->
+            <div class="page">
+                <h2 class="section-title">Drills & Tests</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Automated test scenarios and walk tests to verify system coverage and detection accuracy</p>
+                
+                <div class="alert-box success" style="margin-bottom: 32px;">
+                    <strong>✅ System Health:</strong> 13/15 drills passing (87%). Last full test run: 2 days ago. 2 failures require attention.
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                    <div style="background: white; border: 2px solid var(--border); border-radius: 16px; padding: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">🧪 Automated Drills (28 total)</h3>
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Pass Rate</div>
+                            <div class="health-bar" style="height: 12px; margin-bottom: 8px;">
+                                <div class="health-fill good" style="width: 87%"></div>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--success);">87% (13/15 core paths)</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button class="btn">▶️ Run All Tests</button>
+                            <button class="btn btn-secondary">📊 View Report</button>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; border: 2px solid var(--border); border-radius: 16px; padding: 24px;">
+                        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">🚶 Walk Tests (Manual)</h3>
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 4px;">Coverage</div>
+                            <div class="health-bar" style="height: 12px; margin-bottom: 8px;">
+                                <div class="health-fill fair" style="width: 60%"></div>
+                            </div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--warning);">60% (3/5 core paths tested)</div>
+                        </div>
+                        <div style="display: flex; gap: 12px; margin-top: 20px;">
+                            <button class="btn">🎯 Start Walk Test</button>
+                            <button class="btn btn-secondary">📋 Test Guide</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="background: white; border: 2px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 32px;">
+                    <div style="padding: 24px; border-bottom: 2px solid var(--border); background: var(--bg-light);">
+                        <h3 style="font-size: 20px; font-weight: 700;">Drill Results by Category</h3>
+                    </div>
+                    
+                    <!-- Intrusion Drills -->
+                    <div style="padding: 24px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 16px;">
+                            <h4 style="font-size: 18px; font-weight: 700;">🔓 Intrusion Scenarios (15 tests)</h4>
+                            <span style="padding: 6px 12px; background: #d3f9d8; color: #2b8a3e; border-radius: 8px; font-weight: 700; font-size: 13px;">11/15 PASS</span>
+                        </div>
+                        
+                        <div style="display: grid; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-light); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: 700;">NG-1.1: Front Door Normal Entry</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Z1 → Z2 → EP-FRONT open → Z6 motion</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="color: var(--success); font-size: 24px;">✅</span>
+                                    <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">▶️ Run</button>
+                                    <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">📊 Report</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-light); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: 700;">NG-1.2: Front Door Fast Path</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Z2 → EP-FRONT open (no loiter) → Z6 motion</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="color: var(--success); font-size: 24px;">✅</span>
+                                    <button class="btn btn-secondary" style="font-size: 13px; padding: 6px 12px;">▶️ Run</button>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: #fff5f5; border: 2px solid var(--danger); border-radius: 8px;">
+                                <div>
+                                    <div style="font-weight: 700; color: var(--danger);">NG-1.5: Back Door Dual-Camera</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Z5 PERSON → Z4 PERSON → EP-BACK open → Z7 motion</div>
+                                    <div style="font-size: 13px; color: var(--danger); margin-top: 8px; font-weight: 600;">❌ FAILED: Z4 camera degraded (WiFi -82 dBm), missed PERSON detection</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="color: var(--danger); font-size: 24px;">❌</span>
+                                    <button class="btn" style="background: var(--danger); font-size: 13px; padding: 6px 12px;">🔧 Fix & Retest</button>
+                                </div>
+                            </div>
+                            
+                            <div style="padding: 12px; text-align: center;">
+                                <button class="btn btn-secondary" style="font-size: 14px;">Show All 15 Tests →</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Loitering Drills -->
+                    <div style="padding: 24px; border-bottom: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 style="font-size: 18px; font-weight: 700;">👁️ Loitering & Prowling (5 tests)</h4>
+                            <span style="padding: 6px 12px; background: #d3f9d8; color: #2b8a3e; border-radius: 8px; font-weight: 700; font-size: 13px;">5/5 PASS</span>
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">All loitering detection scenarios passing. Click to view details.</div>
+                        <button class="btn btn-secondary" style="margin-top: 12px; font-size: 14px;">View Details →</button>
+                    </div>
+                    
+                    <!-- Package Drills -->
+                    <div style="padding: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h4 style="font-size: 18px; font-weight: 700;">📦 Package Events (3 tests)</h4>
+                            <span style="padding: 6px 12px; background: #fff3bf; color: #e67700; border-radius: 8px; font-weight: 700; font-size: 13px;">2/3 PASS</span>
+                        </div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Package delivery detection needs attention (1 failure).</div>
+                        <button class="btn btn-secondary" style="margin-top: 12px; font-size: 14px;">View Details →</button>
+                    </div>
+                </div>
+                
+                <!-- Walk Test Guide -->
+                <div style="background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">🚶 Walk Test - Step-by-Step Guide</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Manually test critical intrusion paths with real sensor signals. System will guide you through each step.</p>
+                    
+                    <div style="display: grid; gap: 16px;">
+                        <div style="padding: 20px; background: var(--bg-light); border-radius: 12px; border-left: 4px solid var(--primary);">
+                            <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Step 1: Choose Test Path</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">Select: Front Door Entry, Back Door Entry, or Window Breach</div>
+                        </div>
+                        
+                        <div style="padding: 20px; background: var(--bg-light); border-radius: 12px; border-left: 4px solid var(--primary);">
+                            <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Step 2: Arm System (AWAY mode)</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">System enters ARMING state with 30s exit delay</div>
+                        </div>
+                        
+                        <div style="padding: 20px; background: var(--bg-light); border-radius: 12px; border-left: 4px solid var(--primary);">
+                            <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Step 3: Execute Path</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">Walk through zones as instructed. System records all signals.</div>
+                        </div>
+                        
+                        <div style="padding: 20px; background: var(--bg-light); border-radius: 12px; border-left: 4px solid var(--primary);">
+                            <div style="font-size: 16px; font-weight: 700; margin-bottom: 8px;">Step 4: Review Results</div>
+                            <div style="font-size: 14px; color: var(--text-secondary);">System shows expected vs actual signals, confirms detection worked</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" style="margin-top: 24px; font-size: 16px; padding: 14px 28px;">🎯 Start Walk Test Now</button>
+                </div>
+            </div>
+            
+            <!-- Event Analysis Page -->
+            <div class="page">
+                <h2 class="section-title">Event Analysis - Signal Correlation</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Deep dive into how signals combine to create events. See the complete evidence chain.</p>
+                
+                <div style="background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 32px;">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">🚨 Event: Break-in Attempt (Confirmed)</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;">
+                        <div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Event Type</div>
+                            <div style="font-size: 18px; font-weight: 700;">break_in_attempt</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Confidence</div>
+                            <div style="font-size: 18px; font-weight: 700; color: var(--success);">94%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Status</div>
+                            <div><span class="event-status confirmed">CONFIRMED</span></div>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Timestamp</div>
+                            <div style="font-size: 18px; font-weight: 700;">2 min ago</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Signal Timeline -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">📊 Signal Timeline</h4>
+                        
+                        <div style="position: relative; padding-left: 40px;">
+                            <!-- Timeline line -->
+                            <div style="position: absolute; left: 16px; top: 10px; bottom: 10px; width: 4px; background: var(--border);"></div>
+                            
+                            <!-- Signal 1 -->
+                            <div style="position: relative; margin-bottom: 24px;">
+                                <div style="position: absolute; left: -36px; width: 28px; height: 28px; background: var(--info); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">1</div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; border: 2px solid var(--info);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <div>
+                                            <span style="font-weight: 700;">🔵 PERSON detected</span>
+                                            <a href="#" class="signal-link" data-signal-id="sig-7a3f9c12-001" style="margin-left: 12px; color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 600;">🔗 View Signal Details</a>
+                                        </div>
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary);">t = 0s</div>
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Zone: Z5 (Back Yard) | 
+                                        Camera: <a href="#" class="device-link" data-device-id="back_yard_cam" style="color: var(--primary); text-decoration: none; font-weight: 600;">back_yard_cam</a> | 
+                                        Confidence: 0.92
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 13px; background: #e7f5ff; padding: 8px; border-radius: 6px;">
+                                        <strong>Signal ID:</strong> sig-7a3f9c12-001 | <strong>NGSignal:</strong> {type: "PERSON", zone: "Z5", confidence: 0.92, timestamp: 1702345678}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Signal 2 -->
+                            <div style="position: relative; margin-bottom: 24px;">
+                                <div style="position: absolute; left: -36px; width: 28px; height: 28px; background: var(--info); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">2</div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; border: 2px solid var(--info);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <div>
+                                            <span style="font-weight: 700;">🔵 PERSON detected</span>
+                                            <a href="#" class="signal-link" data-signal-id="sig-7a3f9c12-002" style="margin-left: 12px; color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 600;">🔗 View Signal Details</a>
+                                        </div>
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary);">t = 15s</div>
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Zone: Z4 (Back Door) | 
+                                        Camera: <a href="#" class="device-link" data-device-id="back_door_cam" style="color: var(--primary); text-decoration: none; font-weight: 600;">back_door_cam</a> | 
+                                        Confidence: 0.89
+                                    </div>
+                                    <div style="margin-top: 12px; padding: 12px; background: #fff3bf; border-radius: 8px; border-left: 4px solid var(--warning);">
+                                        <strong>NGEvidence:</strong> Path inference detected: Z5 → Z4 (15s transit, matches outdoor adjacency)
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 13px; background: #e7f5ff; padding: 8px; border-radius: 6px;">
+                                        <strong>Signal ID:</strong> sig-7a3f9c12-002
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Signal 3 -->
+                            <div style="position: relative; margin-bottom: 24px;">
+                                <div style="position: absolute; left: -36px; width: 28px; height: 28px; background: var(--danger); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">3</div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; border: 2px solid var(--danger);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <div>
+                                            <span style="font-weight: 700;">🔴 DOOR_OPEN</span>
+                                            <a href="#" class="signal-link" data-signal-id="sig-7a3f9c12-003" style="margin-left: 12px; color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 600;">🔗 View Signal Details</a>
+                                        </div>
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary);">t = 25s</div>
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Entry Point: EP-BACK (Back Door) | 
+                                        Sensor: <a href="#" class="device-link" data-device-id="door_sensor_back" style="color: var(--primary); text-decoration: none; font-weight: 600;">door_sensor_back</a>
+                                    </div>
+                                    <div style="margin-top: 12px; padding: 12px; background: #fff3bf; border-radius: 8px; border-left: 4px solid var(--warning);">
+                                        <strong>NGEvidence:</strong> Door opened 10s after PERSON detected at Z4 → Confirms approach + entry pattern
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 13px; background: #e7f5ff; padding: 8px; border-radius: 6px;">
+                                        <strong>Signal ID:</strong> sig-7a3f9c12-003
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Signal 4 -->
+                            <div style="position: relative; margin-bottom: 24px;">
+                                <div style="position: absolute; left: -36px; width: 28px; height: 28px; background: var(--warning); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">4</div>
+                                <div style="background: white; padding: 16px; border-radius: 8px; border: 2px solid var(--warning);">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <div>
+                                            <span style="font-weight: 700;">🟡 MOTION detected</span>
+                                            <a href="#" class="signal-link" data-signal-id="sig-7a3f9c12-004" style="margin-left: 12px; color: var(--primary); text-decoration: none; font-size: 12px; font-weight: 600;">🔗 View Signal Details</a>
+                                        </div>
+                                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-secondary);">t = 50s</div>
+                                    </div>
+                                    <div style="font-size: 14px; color: var(--text-secondary);">
+                                        Zone: Z7 (Back Hallway - Indoor) | 
+                                        Motion sensor: <a href="#" class="device-link" data-device-id="motion_sensor_indoor" style="color: var(--primary); text-decoration: none; font-weight: 600;">motion_sensor_indoor</a>
+                                    </div>
+                                    <div style="margin-top: 12px; padding: 12px; background: #d3f9d8; border-radius: 8px; border-left: 4px solid var(--success);">
+                                        <strong>NGEvent CONFIRMED:</strong> Complete path Z5→Z4→EP-BACK→Z7 detected within T_confirm window (60s). Confidence: 94%
+                                    </div>
+                                    <div style="margin-top: 8px; font-size: 13px; background: #e7f5ff; padding: 8px; border-radius: 6px;">
+                                        <strong>Signal ID:</strong> sig-7a3f9c12-004
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Evidence Layer Details -->
+                    <div style="background: #fff3bf; border-radius: 12px; padding: 24px; margin-bottom: 32px; border: 2px solid var(--warning);">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">🔍 Evidence Layer Analysis (v2024.12-beta)</h4>
+                        
+                        <div style="display: grid; gap: 12px;">
+                            <div style="background: white; padding: 16px; border-radius: 8px;">
+                                <div style="font-weight: 700; margin-bottom: 4px;">Path Inference</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Z5 (Back Yard) → Z4 (Back Door) → EP-BACK → Z7 (Indoor)</div>
+                                <div style="font-size: 13px; margin-top: 8px; color: var(--success);">✅ Matches expected intrusion pattern NG-1.5</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 16px; border-radius: 8px;">
+                                <div style="font-weight: 700; margin-bottom: 4px;">Timing Analysis</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Total duration: 50s (within T_confirm=60s window)</div>
+                                <div style="font-size: 13px; margin-top: 8px; color: var(--success);">✅ All signals correlated, no timeout</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 16px; border-radius: 8px;">
+                                <div style="font-weight: 700; margin-bottom: 4px;">Confidence Scoring</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">Base: 80% (outdoor→door→indoor) + 14% (dual camera confirmation) = 94%</div>
+                                <div style="font-size: 13px; margin-top: 8px; color: var(--success);">✅ Exceeds confirmation threshold (70%)</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 16px; border-radius: 8px;">
+                                <div style="font-weight: 700; margin-bottom: 4px;">Action Recognition (Optional)</div>
+                                <div style="font-size: 14px; color: var(--text-secondary);">door_opening action detected at t=23s (confidence: 0.76)</div>
+                                <div style="font-size: 13px; margin-top: 8px; color: var(--info);">ℹ️ Weak evidence - contributed +4% to final score</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Final Event Output -->
+                    <div style="background: #d3f9d8; border-radius: 12px; padding: 24px; border: 2px solid var(--success);">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 16px;">✅ NGEvent (Output to Cloud) - v1.0.0-stable</h4>
+                        
+                        <div style="background: white; padding: 16px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; overflow-x: auto;">
+<pre style="margin: 0;">{
+  "eventId": "evt-7a3f9c12-001",
+  "eventType": "break_in_attempt",
+  "status": "confirmed",
+  "severity": "HIGH",
+  "confidence": 0.94,
+  "timestamp": 1702345728,
+  "traceSummary": "Person Z5→Z4→EP-BACK opened→Z7 motion",
+  "traceRef": "evidence-7a3f9c12-001",
+  "evidenceVersion": "2024.12-beta",
+  "zones": ["Z5", "Z4", "EP-BACK", "Z7"],
+  "replayId": "replay-7a3f9c12-001"
+}</pre>
+                        </div>
+                        
+                        <div style="margin-top: 16px; font-size: 14px;">
+                            <strong>📤 Actions Taken:</strong> Event uploaded to Cloud, Neighbor notification sent (after PENDING period expired), Replay saved (2 min), TrainingRecord generated
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 24px;">
+                        <button class="btn">🎬 Play Full Replay</button>
+                        <button class="btn btn-secondary">🗺️ View on Topology</button>
+                        <button class="btn btn-secondary">📊 Download Evidence JSON</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Signals Page -->
+            <div class="page">
+                <h2 class="section-title">Signal Log - All Device Signals</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Complete history of all signals from sensors and cameras, showing correlation to events or isolation status</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">📡</div>
+                        <div style="font-size: 32px; font-weight: 700; color: var(--primary);">247</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Signals Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🔗</div>
+                        <div style="font-size: 32px; font-weight: 700; color: var(--success);">89</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Correlated to Events</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">🔘</div>
+                        <div style="font-size: 32px; font-weight: 700; color: var(--text-secondary);">158</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Isolated (No Event)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+                        <div style="font-size: 32px; font-weight: 700; color: var(--warning);">12</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Awaiting Correlation</div>
+                    </div>
+                </div>
+                
+                <div style="background: white; border: 2px solid var(--border); border-radius: 16px; overflow: hidden;">
+                    <div style="padding: 24px; border-bottom: 2px solid var(--border); background: var(--bg-light); display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-size: 20px; font-weight: 700;">Signal Timeline (Last 2 hours)</h3>
+                        <div style="display: flex; gap: 10px;">
+                            <select style="padding: 8px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 600;">
+                                <option>All Signals</option>
+                                <option>PERSON Only</option>
+                                <option>DOOR/WINDOW Only</option>
+                                <option>MOTION Only</option>
+                                <option>VEHICLE Only</option>
+                                <option>PACKAGE Only</option>
+                            </select>
+                            <select style="padding: 8px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 600;">
+                                <option>All Zones</option>
+                                <option>Z1 - Front Doorbell</option>
+                                <option>Z2 - Front Porch</option>
+                                <option>Z4 - Back Door</option>
+                                <option>Z5 - Back Yard</option>
+                                <option>Z6/Z7 - Indoor</option>
+                            </select>
+                            <select style="padding: 8px 16px; border: 2px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 600;">
+                                <option>All Status</option>
+                                <option>Correlated</option>
+                                <option>Isolated</option>
+                                <option>Awaiting</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Signal Items -->
+                    <div style="max-height: 600px; overflow-y: auto;">
+                        <!-- Correlated Signal Group (Part of Break-in Event) -->
+                        <div style="padding: 20px; border-bottom: 1px solid var(--border); background: #f0f9ff;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 24px;">🔵</div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 16px;">PERSON detected</div>
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                                <strong>Sensor:</strong> back_yard_cam (Z5 Back Yard) | 
+                                                <strong>Confidence:</strong> 0.92 | 
+                                                <strong>Duration:</strong> 8s
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--success);">
+                                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🔗 Correlated to Event:</div>
+                                        <div style="font-size: 14px; color: var(--text-primary);">
+                                            <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 600;">🚨 break_in_attempt (evt-7a3f9c12-001)</a> - Signal #1 of 4 in correlation chain
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">
+                                            ⏩ Next: PERSON detected in Z4 (15s later) → DOOR_OPEN at EP-BACK (25s later)
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: right; min-width: 150px; margin-left: 20px;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--text-primary);">14:23:18</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">2 min ago</div>
+                                    <div style="margin-top: 8px;">
+                                        <span style="padding: 4px 10px; background: #d3f9d8; color: #2b8a3e; border-radius: 6px; font-size: 11px; font-weight: 700;">CORRELATED</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📊 View Event</button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">🗺️ Show on Topology</button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📹 View Frame</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Isolated Signal (No Event) -->
+                        <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 24px;">🟡</div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 16px;">MOTION detected</div>
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                                <strong>Sensor:</strong> motion_sensor_back_yard (Z5 Back Yard) | 
+                                                <strong>Duration:</strong> 3s
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; margin-top: 12px;">
+                                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🔘 Isolated Signal</div>
+                                        <div style="font-size: 13px; color: var(--text-secondary);">
+                                            No correlated signals within correlation window (5 min). Likely: pet, wildlife, or environmental noise. No event generated.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: right; min-width: 150px; margin-left: 20px;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--text-primary);">14:18:42</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">6 min ago</div>
+                                    <div style="margin-top: 8px;">
+                                        <span style="padding: 4px 10px; background: #e9ecef; color: #495057; border-radius: 6px; font-size: 11px; font-weight: 700;">ISOLATED</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Correlated Signal (Package Delivery Event) -->
+                        <div style="padding: 20px; border-bottom: 1px solid var(--border); background: #f0fdf4;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 24px;">📦</div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 16px;">PACKAGE detected</div>
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                                <strong>Sensor:</strong> front_porch_cam (Z2 Front Porch) | 
+                                                <strong>Confidence:</strong> 0.96
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--success);">
+                                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">🔗 Correlated to Event:</div>
+                                        <div style="font-size: 14px; color: var(--text-primary);">
+                                            <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 600;">📦 package_delivered (evt-7a3f9c12-003)</a> - Signal #2 of 3
+                                        </div>
+                                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">
+                                            Signal chain: PERSON + VEHICLE → PACKAGE placed → departure detected
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: right; min-width: 150px; margin-left: 20px;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--text-primary);">11:15:23</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">3 hours ago</div>
+                                    <div style="margin-top: 8px;">
+                                        <span style="padding: 4px 10px; background: #d3f9d8; color: #2b8a3e; border-radius: 6px; font-size: 11px; font-weight: 700;">CORRELATED</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📊 View Event</button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📹 View Frame</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Awaiting Correlation -->
+                        <div style="padding: 20px; border-bottom: 1px solid var(--border); background: #fffbeb;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                        <div style="font-size: 24px;">🔵</div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 16px;">PERSON detected</div>
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                                <strong>Sensor:</strong> front_porch_cam (Z2 Front Porch) | 
+                                                <strong>Confidence:</strong> 0.78 | 
+                                                <strong>Duration:</strong> ongoing
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: white; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--warning);">
+                                        <div style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">⏳ Awaiting Correlation</div>
+                                        <div style="font-size: 13px; color: var(--text-secondary);">
+                                            Person detected loitering on front porch (68s elapsed). Watching for additional signals (door open, window trigger) within T_confirm window (60s remaining).
+                                        </div>
+                                        <div style="margin-top: 8px; padding: 8px; background: #fef3c7; border-radius: 6px;">
+                                            <strong>Candidate Event:</strong> suspicious_person_loitering (will confirm if >90s OR door approached)
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="text-align: right; min-width: 150px; margin-left: 20px;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--warning);">14:22:05</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">3 min ago</div>
+                                    <div style="margin-top: 8px;">
+                                        <span style="padding: 4px 10px; background: #fff3bf; color: #e67700; border-radius: 6px; font-size: 11px; font-weight: 700;">AWAITING</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">🗺️ Show on Topology</button>
+                                <button class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">📹 Live View</button>
+                            </div>
+                        </div>
+                        
+                        <!-- More Isolated Signals -->
+                        <div style="padding: 20px; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="font-size: 24px;">🚪</div>
+                                        <div>
+                                            <div style="font-weight: 700; font-size: 16px;">DOOR_OPEN</div>
+                                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 2px;">
+                                                <strong>Sensor:</strong> front_door_sensor (EP-FRONT) | <strong>Duration:</strong> 12s
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top: 12px; font-size: 13px; color: var(--text-secondary);">
+                                        🔘 <strong>Isolated:</strong> Door opened during DISARMED mode, no correlation needed
+                                    </div>
+                                </div>
+                                <div style="text-align: right; min-width: 150px; margin-left: 20px;">
+                                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;">13:45:12</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">40 min ago</div>
+                                    <div style="margin-top: 8px;">
+                                        <span style="padding: 4px 10px; background: #e9ecef; color: #495057; border-radius: 6px; font-size: 11px; font-weight: 700;">ISOLATED</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 20px; text-align: center; background: var(--bg-light);">
+                            <button class="btn btn-secondary">Load More Signals (200+ older)</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Signal Statistics -->
+                <div style="margin-top: 32px; background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">📊 Signal Statistics by Sensor</h3>
+                    
+                    <div style="display: grid; gap: 16px;">
+                        <div style="padding: 16px; background: var(--bg-light); border-radius: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 16px;">📹 back_yard_cam (Z5)</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary);">Camera • RTSP</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 24px; font-weight: 700; color: var(--primary);">42</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">signals today</div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 13px;">
+                                <div><strong>PERSON:</strong> 28 (18 correlated)</div>
+                                <div><strong>VEHICLE:</strong> 12 (8 correlated)</div>
+                                <div><strong>PACKAGE:</strong> 2 (2 correlated)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: var(--bg-light); border-radius: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 16px;">🚪 back_door_sensor (EP-BACK)</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary);">Door Sensor • Zigbee</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 24px; font-weight: 700; color: var(--primary);">8</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">signals today</div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                <div><strong>DOOR_OPEN:</strong> 6 (4 correlated)</div>
+                                <div><strong>DOOR_CLOSE:</strong> 6 (4 correlated)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: var(--bg-light); border-radius: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 16px;">👁️ motion_sensor_indoor (Z7)</div>
+                                    <div style="font-size: 13px; color: var(--text-secondary);">Motion Sensor • Zigbee</div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-size: 24px; font-weight: 700; color: var(--primary);">156</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">signals today</div>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                                <div><strong>MOTION:</strong> 156 (12 correlated)</div>
+                                <div><strong>Correlation Rate:</strong> 7.7%</div>
+                            </div>
+                            <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                                ℹ️ High signal volume, low correlation - normal for indoor motion sensors
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Devices Page -->
+            <div class="page">
+                <h2 class="section-title">Device Management</h2>
+                <div class="devices-grid">
+                    <div class="device-card">
+                        <div class="device-header">
+                            <div class="device-icon-wrapper">📹</div>
+                            <div class="device-status-dot online"></div>
+                        </div>
+                        <div class="device-name">Back Door Camera</div>
+                        <div class="device-details">RTSP • 192.168.1.101 • Zone: Z4</div>
+                        
+                        <div class="device-health">
+                            <div class="health-bar">
+                                <div class="health-fill good" style="width: 85%"></div>
+                            </div>
+                            <div class="health-info">
+                                <span class="health-score">Health: 85/100</span>
+                                <span style="color: var(--warning);">⚠️ Moderate WiFi</span>
+                            </div>
+                        </div>
+                        
+                        <div class="device-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Power:</div>
+                                <div class="metric-value">🔌 AC</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Network:</div>
+                                <div class="metric-value">📶 -65 dBm</div>
+                            </div>
+                        </div>
+                        
+                        <div class="device-capabilities">
+                            <span class="capability-tag">PERSON</span>
+                            <span class="capability-tag">VEHICLE</span>
+                            <span class="capability-tag">door_opening</span>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" style="flex: 1;">⚙️ Configure</button>
+                            <button class="btn btn-secondary device-signals-btn" data-device-id="back_door_cam" style="flex: 1;">📡 View Signals</button>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card">
+                        <div class="device-header">
+                            <div class="device-icon-wrapper">📹</div>
+                            <div class="device-status-dot online"></div>
+                        </div>
+                        <div class="device-name">Front Doorbell</div>
+                        <div class="device-details">ONVIF • WiFi • Zone: Z1</div>
+                        
+                        <div class="device-health">
+                            <div class="health-bar">
+                                <div class="health-fill good" style="width: 90%"></div>
+                            </div>
+                            <div class="health-info">
+                                <span class="health-score">Health: 90/100</span>
+                                <span style="color: var(--success);">✅ Good</span>
+                            </div>
+                        </div>
+                        
+                        <div class="device-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Power:</div>
+                                <div class="metric-value">🔋 65% ⚡</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Network:</div>
+                                <div class="metric-value">📶 -55 dBm</div>
+                            </div>
+                        </div>
+                        
+                        <div class="device-capabilities">
+                            <span class="capability-tag">PERSON</span>
+                            <span class="capability-tag">PACKAGE</span>
+                            <span class="capability-tag">knocking</span>
+                            <span class="capability-tag">face_recog</span>
+                        </div>
+                        
+                        <div class="alert-box info" style="margin: 12px 0;">
+                            <div style="font-size: 13px;">🔋 <strong>Charging</strong> • Est. 12 days remaining</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" style="flex: 1;">⚙️ Configure</button>
+                            <button class="btn btn-secondary device-signals-btn" data-device-id="front_doorbell" style="flex: 1;">📡 View Signals</button>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card">
+                        <div class="device-header">
+                            <div class="device-icon-wrapper">🚪</div>
+                            <div class="device-status-dot online"></div>
+                        </div>
+                        <div class="device-name">Back Door Sensor</div>
+                        <div class="device-details">Zigbee • Entry Point: EP-BACK</div>
+                        
+                        <div class="device-health">
+                            <div class="health-bar">
+                                <div class="health-fill good" style="width: 95%"></div>
+                            </div>
+                            <div class="health-info">
+                                <span class="health-score">Health: 95/100</span>
+                                <span style="color: var(--success);">✅ Excellent</span>
+                            </div>
+                        </div>
+                        
+                        <div class="device-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Battery:</div>
+                                <div class="metric-value">🔋 89%</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Signal:</div>
+                                <div class="metric-value">📶 Strong</div>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 13px; color: var(--text-secondary); margin: 12px 0;">
+                            Last trigger: 2 min ago (Entry Delay activated)
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" style="flex: 1;">⚙️ Configure</button>
+                            <button class="btn btn-secondary device-signals-btn" data-device-id="door_sensor_back" style="flex: 1;">📡 View Signals</button>
+                        </div>
+                    </div>
+                    
+                    <div class="device-card">
+                        <div class="device-header">
+                            <div class="device-icon-wrapper">🔢</div>
+                            <div class="device-status-dot online"></div>
+                        </div>
+                        <div class="device-name">Entry Keypad</div>
+                        <div class="device-details">Zigbee • Location: Back Door</div>
+                        
+                        <div class="device-health">
+                            <div class="health-bar">
+                                <div class="health-fill good" style="width: 92%"></div>
+                            </div>
+                            <div class="health-info">
+                                <span class="health-score">Health: 92/100</span>
+                                <span style="color: var(--success);">✅ Good</span>
+                            </div>
+                        </div>
+                        
+                        <div class="device-metrics">
+                            <div class="metric">
+                                <div class="metric-label">Battery:</div>
+                                <div class="metric-value">🔋 78%</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">Users:</div>
+                                <div class="metric-value">👥 4 PINs</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-box success" style="margin: 12px 0;">
+                            <div style="font-size: 13px; font-weight: 600;">✅ Primary Disarm Channel</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" style="flex: 1;">🔑 Manage PINs</button>
+                            <button class="btn btn-secondary device-signals-btn" data-device-id="entry_keypad" style="flex: 1;">📡 View Signals</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Topology Page -->
+            <div class="page">
+                <h2 class="section-title">Zone Topology & Signal Visualization</h2>
+                
+                <div class="topology-container">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <h3 style="font-size: 20px; font-weight: 700;">Current Topology</h3>
+                        <div>
+                            <button class="btn btn-secondary">📥 Import Config</button>
+                            <button class="btn" style="margin-left: 12px;">📤 Export Config</button>
+                        </div>
+                    </div>
+                    
+                    <div class="topology-canvas">
+                        <div class="zone-group">
+                            <div class="zone-label">🌳 Outdoor Zones</div>
+                            <div class="zone-items">
+                                <div class="zone-node">
+                                    <div class="node-icon">📹</div>
+                                    <div class="node-name">Z1 Doorbell</div>
+                                    <div class="node-status">Online</div>
+                                </div>
+                                
+                                <div class="zone-arrow">→</div>
+                                
+                                <div class="zone-node">
+                                    <div class="node-icon">📹📦</div>
+                                    <div class="node-name">Z2 Front Porch</div>
+                                    <div class="node-status">Online</div>
+                                </div>
+                                
+                                <div class="zone-arrow">→</div>
+                                
+                                <div class="zone-node">
+                                    <div class="node-icon">🚪</div>
+                                    <div class="node-name">EP-FRONT</div>
+                                    <div class="node-status">Closed</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="zone-group">
+                            <div class="zone-label">🏡 Back Yard Path (RECENT ACTIVITY)</div>
+                            <div class="zone-items">
+                                <div class="zone-node triggered">
+                                    <div class="signal-pulse person"></div>
+                                    <div class="node-icon">📹</div>
+                                    <div class="node-name">Z5 Back Yard</div>
+                                    <div class="node-status">PERSON detected</div>
+                                </div>
+                                
+                                <div class="zone-arrow">→</div>
+                                
+                                <div class="zone-node triggered">
+                                    <div class="signal-pulse person"></div>
+                                    <div class="node-icon">📹</div>
+                                    <div class="node-name">Z4 Back Door</div>
+                                    <div class="node-status">PERSON detected</div>
+                                </div>
+                                
+                                <div class="zone-arrow">→</div>
+                                
+                                <div class="zone-node triggered">
+                                    <div class="signal-pulse door"></div>
+                                    <div class="node-icon">🚪🔴</div>
+                                    <div class="node-name">EP-BACK</div>
+                                    <div class="node-status">OPEN - 2 min ago</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="zone-group">
+                            <div class="zone-label">🏠 Indoor Zones</div>
+                            <div class="zone-items">
+                                <div class="zone-node" style="border-color: var(--primary);">
+                                    <div class="signal-pulse motion"></div>
+                                    <div class="node-icon">👁️</div>
+                                    <div class="node-name">Z7 Back Hallway</div>
+                                    <div class="node-status">MOTION detected</div>
+                                </div>
+                                
+                                <div style="margin: 0 20px; color: var(--text-secondary);">Connected to:</div>
+                                
+                                <div class="zone-node">
+                                    <div class="node-icon">👁️</div>
+                                    <div class="node-name">Z6 Front Hallway</div>
+                                    <div class="node-status">No motion</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="zone-group">
+                            <div class="zone-label">🪟 Window Sensors</div>
+                            <div class="zone-items">
+                                <div class="zone-node">
+                                    <div class="node-icon">🪟</div>
+                                    <div class="node-name">WIN-FRONT</div>
+                                    <div class="node-status">Closed</div>
+                                </div>
+                                
+                                <div class="zone-node">
+                                    <div class="node-icon">🪟</div>
+                                    <div class="node-name">WIN-BACK</div>
+                                    <div class="node-status">Closed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box danger" style="margin-top: 24px;">
+                        <strong>🚨 Current Event Trace:</strong> Person detected in Z5 (t=0s) → moved to Z4 (t=15s) → EP-BACK opened (t=25s) → Z7 motion (t=50s) → <strong>Confirmed: break_in_attempt (HIGH)</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contracts Page -->
+            <div class="page">
+                <h2 class="section-title">Contract Layers & Versioning</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px; font-size: 16px;">Three-layer architecture ensures research iteration doesn't break external consumers</p>
+                
+                <div class="contract-layers">
+                    <div class="layer signal">
+                        <div class="layer-header">
+                            <div class="layer-title">Layer 1: NGSignal (Input ABI)</div>
+                            <div class="layer-version">v1.2.0</div>
+                        </div>
+                        <div class="layer-description">
+                            Normalized device signals with optional confidence/magnitude extensions. Stable contract for hardware adapters.
+                        </div>
+                        <div class="layer-examples">
+                            <span class="example-tag">PERSON detected</span>
+                            <span class="example-tag">DOOR_OPEN</span>
+                            <span class="example-tag">MOTION confidence:0.95</span>
+                            <span class="example-tag">VEHICLE speed:2.5m/s</span>
+                        </div>
+                    </div>
+                    
+                    <div class="layer evidence">
+                        <div class="layer-header">
+                            <div class="layer-title">Layer 2: NGEvidence (Internal ABI)</div>
+                            <div class="layer-version">2024.12-beta</div>
+                        </div>
+                        <div class="layer-description">
+                            Fast-iteration layer for path inference, action recognition, feature vectors. Strongly versioned, not exposed externally.
+                        </div>
+                        <div class="layer-examples">
+                            <span class="example-tag">pathInference: Z5→Z4→EP</span>
+                            <span class="example-tag">actionRecognized: door_opening</span>
+                            <span class="example-tag">featureVector: [0.92, 0.15, ...]</span>
+                            <span class="example-tag">poseKeypoints: {...}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="layer event">
+                        <div class="layer-header">
+                            <div class="layer-title">Layer 3: NGEvent (Output ABI)</div>
+                            <div class="layer-version">v1.0.0-stable</div>
+                        </div>
+                        <div class="layer-description">
+                            Long-term stable contract for Cloud/neighbors/third-party. Details referenced via traceRef/evidenceRef, never directly embedded.
+                        </div>
+                        <div class="layer-examples">
+                            <span class="example-tag">eventType: break_in_attempt</span>
+                            <span class="example-tag">status: confirmed</span>
+                            <span class="example-tag">traceSummary: "..."</span>
+                            <span class="example-tag">traceRef: evidence-uuid</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert-box info">
+                    <h4 style="margin-bottom: 12px; font-size: 18px;">✅ Benefits of Three-Layer Architecture</h4>
+                    <ul style="margin-left: 24px; line-height: 2;">
+                        <li><strong>Research Independence:</strong> Iterate on Evidence layer (pose estimation, action recognition) without breaking Cloud consumers</li>
+                        <li><strong>Schema Stability:</strong> NGEvent schema remains stable even as detection algorithms improve</li>
+                        <li><strong>Backward Compatibility:</strong> Old Cloud systems can consume new Events via stable contract</li>
+                        <li><strong>Detailed Access:</strong> Power users can fetch full Evidence via traceRef for deep analysis</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Settings Page -->
+            <div class="page">
+                <h2 class="section-title">System Settings</h2>
+                
+                <!-- Policy Pack Parameters - PRIMARY SECTION -->
+                <div style="background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px; margin-bottom: 32px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div>
+                            <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">🎯 Event Detection Parameters</h3>
+                            <p style="color: var(--text-secondary); font-size: 14px;">Control how signals are correlated to predict and confirm events</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 13px; color: var(--text-secondary);">Policy Pack Version</div>
+                            <div style="font-weight: 700; font-size: 18px; color: var(--primary);">v2.1.3</div>
+                            <a href="#" style="font-size: 12px; color: var(--primary); text-decoration: none;">Check for updates</a>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box warning" style="margin-bottom: 24px;">
+                        <strong>⚠️ Advanced Settings:</strong> Changes affect event detection accuracy. Test with drills after modifying. Auto-backup created before each change.
+                    </div>
+                    
+                    <!-- Time Windows Section -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">⏱️ Time Windows & Correlation</h4>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    T_confirm - Path Completion Window
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(How long to wait for complete signal chain)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="30" max="120" value="60" id="t_confirm_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="30" max="120" value="60" id="t_confirm_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ <strong>Example:</strong> PERSON detected in Z5 → must reach indoor zone within this window to confirm break-in
+                                </div>
+                                <div style="margin-top: 8px; padding: 10px; background: white; border-radius: 6px; font-size: 13px;">
+                                    <strong>Current:</strong> 60s | <strong>Default:</strong> 60s | <strong>Range:</strong> 30-120s
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    T_path - Zone Transition Timeout
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Max time between adjacent zone detections)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="10" max="60" value="30" id="t_path_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="10" max="60" value="30" id="t_path_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ <strong>Example:</strong> If PERSON in Z5, must appear in adjacent Z4 within 30s (else path broken)
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Session Window
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Group related signals into same session)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="60" max="600" value="300" id="session_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="60" max="600" value="300" id="session_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Signals within this window are considered part of same activity session
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Deduplication Window
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Prevent duplicate events)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="30" max="300" value="120" id="dedupe_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="30" max="300" value="120" id="dedupe_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Don't create duplicate event if similar event within this window
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Confidence Thresholds Section -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">🎚️ Confidence Thresholds</h4>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Candidate → Confirmed Threshold
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Minimum confidence to confirm event)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="50" max="95" value="70" id="confirm_threshold_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="50" max="95" value="70" id="confirm_threshold_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ⚖️ <strong>Trade-off:</strong> Lower = more Confirmed events (higher recall, more FP) | Higher = fewer Confirmed (lower recall, fewer FP)
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Signal Confidence Minimum
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Ignore signals below this)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="30" max="90" value="50" id="signal_min_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="30" max="90" value="50" id="signal_min_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Camera/sensor signals with confidence below this are discarded (noise reduction)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Behavioral Thresholds Section -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">👁️ Behavioral Thresholds</h4>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Loitering Threshold
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Minimum time to trigger loitering event)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="15" max="120" value="30" id="loiter_threshold_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="15" max="120" value="30" id="loiter_threshold_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ PERSON detected in same zone for this duration → creates Candidate (suspicious_person_loitering)
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Loitering Confirm Threshold
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Upgrade to Confirmed)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="30" max="300" value="90" id="loiter_confirm_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="30" max="300" value="90" id="loiter_confirm_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ If loitering exceeds this OR door approached → upgrade to Confirmed
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Package Removal Window
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Suspicious if removed within this time)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="30" max="600" value="120" id="package_removal_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="30" max="600" value="120" id="package_removal_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">seconds</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Package placed → removed within this window → triggers package_theft event
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scoring Weights Section -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">⚖️ Evidence Scoring Weights</h4>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Path Completion Weight
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(Outdoor → Door → Indoor)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="50" max="100" value="80" id="path_weight_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="50" max="100" value="80" id="path_weight_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Base confidence for complete path detection (before bonuses)
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Dual Camera Bonus
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(PERSON detected on 2+ cameras)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="0" max="30" value="14" id="dual_camera_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="0" max="30" value="14" id="dual_camera_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Example: Path (80%) + Dual Camera (14%) = 94% total confidence
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Action Recognition Bonus (Weak Evidence)
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(door_opening, window_breaking detected)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="0" max="15" value="4" id="action_bonus_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="0" max="15" value="4" id="action_bonus_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ⚠️ Action recognition is weak evidence - contributes small bonus only
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 8px;">
+                                    Door Sensor Malfunction Penalty
+                                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">(If door sensor didn't trigger)</span>
+                                </label>
+                                <div style="display: flex; gap: 16px; align-items: center;">
+                                    <input type="range" min="0" max="30" value="15" id="sensor_penalty_slider" style="flex: 1; height: 8px;">
+                                    <input type="number" min="0" max="30" value="15" id="sensor_penalty_value" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                                    <span style="font-size: 14px; color: var(--text-secondary);">%</span>
+                                </div>
+                                <div style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">
+                                    ℹ️ Reduces confidence if PERSON → indoor motion but door sensor didn't trigger (possible sensor issue)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mode-Specific Overrides -->
+                    <div style="background: var(--bg-light); border-radius: 12px; padding: 24px;">
+                        <h4 style="font-size: 18px; font-weight: 700; margin-bottom: 20px;">🏠 Mode-Specific Overrides</h4>
+                        
+                        <div style="margin-bottom: 16px; padding: 16px; background: white; border-radius: 8px;">
+                            <div style="font-weight: 700; margin-bottom: 8px;">AWAY Mode (Current)</div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Use stricter thresholds when nobody home</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                                <div>✅ Confirm threshold: 70% → <strong>60%</strong> (more sensitive)</div>
+                                <div>✅ Loiter threshold: 30s → <strong>20s</strong> (faster trigger)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 16px; padding: 16px; background: white; border-radius: 8px;">
+                            <div style="font-weight: 700; margin-bottom: 8px;">HOME Mode</div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Relax thresholds to reduce false alarms from family activity</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                                <div>Confirm threshold: 70% → <strong>80%</strong> (less sensitive)</div>
+                                <div>Loiter threshold: 30s → <strong>60s</strong> (longer wait)</div>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 16px; background: white; border-radius: 8px;">
+                            <div style="font-weight: 700; margin-bottom: 8px;">NIGHT Mode</div>
+                            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">Balance sensitivity for indoor noise vs outdoor threats</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
+                                <div>Indoor motion: <strong>Ignored</strong> (assume family movement)</div>
+                                <div>Outdoor/window: <strong>High sensitivity</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;">
+                        <button class="btn btn-secondary">↩️ Reset to Defaults</button>
+                        <button class="btn btn-secondary">💾 Save as Preset</button>
+                        <button class="btn">✅ Apply Changes & Run Drills</button>
+                    </div>
+                </div>
+                
+                <!-- Local Disarm Channels -->
+                <div class="disarm-panel">
+                    <h3 style="margin-bottom: 12px; font-size: 22px;">🔓 Local Disarm Channels</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Configure how users can disarm the system at entry points (required for entry delay)</p>
+                    
+                    <div class="disarm-methods">
+                        <div class="disarm-method active">
+                            <div class="method-header">
+                                <div class="method-icon">🔢</div>
+                                <div class="method-name">Zigbee Keypad</div>
+                                <div class="method-status" style="background: #d3f9d8; color: #2b8a3e; font-weight: 700;">✅ Active</div>
+                            </div>
+                            <div class="method-description">
+                                Traditional alarm panel with PIN entry. Primary disarm method for door entry points.
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                <strong>Devices:</strong> Entry Keypad (Back Door), Entry Keypad (Front Door)
+                            </div>
+                        </div>
+                        
+                        <div class="disarm-method">
+                            <div class="method-header">
+                                <div class="method-icon">🔐</div>
+                                <div class="method-name">Smart Lock Integration</div>
+                                <div class="method-status" style="background: #fff3bf; color: #e67700; font-weight: 700;">⚠️ Available</div>
+                            </div>
+                            <div class="method-description">
+                                Unlock with valid PIN/fingerprint = auto disarm. Requires compatible smart lock hardware.
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                <strong>Compatible:</strong> August, Schlage, Yale Connect
+                            </div>
+                        </div>
+                        
+                        <div class="disarm-method">
+                            <div class="method-header">
+                                <div class="method-icon">📱</div>
+                                <div class="method-name">NFC/Keyfob</div>
+                                <div class="method-status" style="background: #e9ecef; color: #495057; font-weight: 700;">Not Configured</div>
+                            </div>
+                            <div class="method-description">
+                                Tap NFC card or press keyfob button to disarm. Quick entry without PIN.
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">
+                                <strong>Requires:</strong> NFC reader (not detected)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" style="margin-top: 20px;">🔑 Manage PINs & Access Codes</button>
+                </div>
+                
+                <!-- Pre-intrusion Settings -->
+                <div style="margin-top: 40px; background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="margin-bottom: 12px; font-size: 22px;">⚠️ Pre-intrusion Warning & Deterrence</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Configure how the system handles suspicious activity before confirmed intrusion</p>
+                    
+                    <div class="tier-setting">
+                        <div class="tier-header">
+                            <div class="tier-title">Tier 0: Silent Pre-warning (Always On)</div>
+                            <div class="tier-toggle active"></div>
+                        </div>
+                        <div class="tier-description">
+                            Create private Candidate events for loitering >30s. No notifications, used for pattern learning and training data.
+                        </div>
+                        <div class="tier-actions">
+                            <span class="action-tag">Record Replay</span>
+                            <span class="action-tag">Build Training Data</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tier-setting">
+                        <div class="tier-header">
+                            <div class="tier-title">Tier 1: Soft Deterrence (Opt-in)</div>
+                            <div class="tier-toggle active"></div>
+                        </div>
+                        <div class="tier-description">
+                            After 60s loitering, trigger lights/chime/voice warning. Still Candidate status, no neighbor escalation.
+                        </div>
+                        <div class="tier-actions">
+                            <span class="action-tag">Activate Lights</span>
+                            <span class="action-tag">Play Chime</span>
+                            <span class="action-tag">Voice Warning</span>
+                        </div>
+                    </div>
+                    
+                    <div class="tier-setting">
+                        <div class="tier-header">
+                            <div class="tier-title">Tier 2: Confirmed Escalation (Default)</div>
+                            <div class="tier-toggle active"></div>
+                        </div>
+                        <div class="tier-description">
+                            Loitering + door attempt OR action recognition → Confirmed event → eligible for neighbor escalation and Cloud sync.
+                        </div>
+                        <div class="tier-actions">
+                            <span class="action-tag">Upgrade to Confirmed</span>
+                            <span class="action-tag">Enable Neighbor Share</span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box warning" style="margin-top: 20px;">
+                        <strong>⚠️ Note:</strong> Action recognition (e.g., "prying door") is weak evidence only. It contributes to scoring but doesn't auto-confirm without corroborating signals from other sensors.
+                    </div>
+                </div>
+                
+                <!-- Alarm Timing -->
+                <div style="margin-top: 40px; background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="margin-bottom: 12px; font-size: 22px;">⏱️ Alarm Timing Configuration</h3>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">
+                        <div>
+                            <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Exit Delay (ARMING)</label>
+                            <input type="number" value="30" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Time to leave before system arms (seconds)</div>
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; font-size: 15px; font-weight: 700; margin-bottom: 10px;">Entry Delay (PENDING)</label>
+                            <input type="number" value="60" style="width: 100%; padding: 12px; border: 2px solid var(--border); border-radius: 8px; font-size: 15px;">
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 6px;">Time to disarm before triggering alarm (seconds)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box info" style="margin-top: 20px;">
+                        💡 <strong>Tip:</strong> During PENDING period, local alarm sounds but Cloud/neighbor escalation is blocked. This allows cancellation if it's a false alarm.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Neighbors Page -->
+            <div class="page">
+                <h2 class="section-title">Neighbor Collaboration</h2>
+                
+                <div class="neighbor-actions-panel">
+                    <h3 style="margin-bottom: 8px; font-size: 22px;">Simulated: You received a break-in alert from your neighbor</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">Confirmed event at 123 Maple St • 2 min ago • High severity</p>
+                    
+                    <div class="alert-box danger">
+                        <div style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">🚨 Break-in Attempt</div>
+                        <div style="font-size: 15px;">Person entered through back door. Motion detected inside hallway. Owner not home (AWAY mode).</div>
+                    </div>
+                    
+                    <h4 style="margin: 24px 0 16px 0; font-size: 18px; font-weight: 700;">What can you do?</h4>
+                    
+                    <div class="action-buttons-grid">
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">✅</div>
+                            <div class="action-btn-label">I Acknowledge</div>
+                            <div class="action-btn-desc">Mark as seen, no action yet</div>
+                        </div>
+                        
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">👁️</div>
+                            <div class="action-btn-label">I'll Check It Out</div>
+                            <div class="action-btn-desc">Going to investigate now</div>
+                        </div>
+                        
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">🚗</div>
+                            <div class="action-btn-label">Record License Plate</div>
+                            <div class="action-btn-desc">I see a suspicious vehicle</div>
+                        </div>
+                        
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">📸</div>
+                            <div class="action-btn-label">Take Photos</div>
+                            <div class="action-btn-desc">I can document the scene</div>
+                        </div>
+                        
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">🚨</div>
+                            <div class="action-btn-label">Suggest Calling 911</div>
+                            <div class="action-btn-desc">This needs police response</div>
+                        </div>
+                        
+                        <div class="neighbor-action-btn">
+                            <div class="action-btn-icon">❌</div>
+                            <div class="action-btn-label">Can't Help Now</div>
+                            <div class="action-btn-desc">Unable to respond</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert-box success" style="margin-top: 24px;">
+                        <h4 style="margin-bottom: 8px; font-size: 16px; font-weight: 700;">🔒 Privacy & Authorization</h4>
+                        <p style="font-size: 14px; line-height: 1.7;">
+                            Your neighbor has <strong>not</strong> shared media files (respecting default privacy). If you select "I'll Check It Out" or "Record License", the system will notify them and they can choose to share a 2-minute clip. All access is logged and can be revoked within 7 days.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- State Machine -->
+                <div style="margin-top: 40px; background: white; border: 2px solid var(--border); border-radius: 16px; padding: 32px;">
+                    <h3 style="margin-bottom: 20px; font-size: 22px;">📊 Collaboration State Flow</h3>
+                    
+                    <div style="display: flex; align-items: center; gap: 16px; font-size: 15px; flex-wrap: wrap;">
+                        <div style="padding: 16px 20px; background: #fff3bf; border-radius: 10px; font-weight: 700;">OPEN</div>
+                        <span style="font-size: 24px;">→</span>
+                        <div style="padding: 16px 20px; background: #e7f5ff; border-radius: 10px; font-weight: 700;">ACKNOWLEDGED</div>
+                        <span style="font-size: 24px;">→</span>
+                        <div style="padding: 16px 20px; background: #fff3bf; border-radius: 10px; font-weight: 700;">IN_PROGRESS</div>
+                        <span style="font-size: 24px;">→</span>
+                        <div style="padding: 16px 20px; background: #d3f9d8; border-radius: 10px; font-weight: 700;">RESOLVED</div>
+                    </div>
+                    
+                    <div style="margin-top: 24px; font-size: 15px; line-height: 2;">
+                        <strong>State Transitions:</strong><br>
+                        • <strong>OPEN → ACKNOWLEDGED:</strong> Neighbor clicks "I Acknowledge"<br>
+                        • <strong>ACKNOWLEDGED → IN_PROGRESS:</strong> Neighbor takes action (check/record/photo)<br>
+                        • <strong>IN_PROGRESS → RESOLVED:</strong> Owner marks resolved or 911 called<br>
+                        • Any state can escalate to <strong>ESCALATE_TO_911</strong> for immediate police response
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching (9 tabs now: Overview, Events, Feedback, Drills, Event Analysis, Signals, Devices, Topology, Settings)
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.page')[index].classList.add('active');
+            });
+        });
+        
+        // Signal link clicks - navigate to Signals tab and highlight signal
+        document.querySelectorAll('.signal-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const signalId = link.getAttribute('data-signal-id');
+                
+                // Switch to Signals tab (index 5)
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab')[5].classList.add('active');
+                document.querySelectorAll('.page')[5].classList.add('active');
+                
+                // Scroll to top and show notification
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Show a temporary notification
+                const notification = document.createElement('div');
+                notification.style.cssText = 'position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: #667eea; color: white; padding: 16px 32px; border-radius: 12px; font-weight: 600; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.3);';
+                notification.textContent = `📡 Viewing Signal: ${signalId}`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.transition = 'opacity 0.3s';
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            });
+        });
+        
+        // Device link clicks - navigate to Devices tab and highlight device
+        document.querySelectorAll('.device-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const deviceId = link.getAttribute('data-device-id');
+                
+                // Switch to Devices tab (index 6)
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab')[6].classList.add('active');
+                document.querySelectorAll('.page')[6].classList.add('active');
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                const notification = document.createElement('div');
+                notification.style.cssText = 'position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: #667eea; color: white; padding: 16px 32px; border-radius: 12px; font-weight: 600; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.3);';
+                notification.textContent = `📹 Viewing Device: ${deviceId}`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.transition = 'opacity 0.3s';
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2000);
+            });
+        });
+        
+        // Device "View Signals" button clicks - navigate to Signals tab with device filter
+        document.querySelectorAll('.device-signals-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const deviceId = btn.getAttribute('data-device-id');
+                
+                // Switch to Signals tab (index 5)
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab')[5].classList.add('active');
+                document.querySelectorAll('.page')[5].classList.add('active');
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Show notification with device filter info
+                const notification = document.createElement('div');
+                notification.style.cssText = 'position: fixed; top: 100px; left: 50%; transform: translateX(-50%); background: #51cf66; color: white; padding: 16px 32px; border-radius: 12px; font-weight: 600; z-index: 10000; box-shadow: 0 8px 24px rgba(0,0,0,0.3);';
+                notification.innerHTML = `📡 Showing signals from: <strong>${deviceId}</strong>`;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.style.transition = 'opacity 0.3s';
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 300);
+                }, 2500);
+            });
+        });
+        
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const container = btn.closest('.timeline-filters');
+                container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        // Tier toggles
+        document.querySelectorAll('.tier-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+            });
+        });
+        
+        // Countdown timer
+        let countdown = 43;
+        const timerElement = document.querySelector('.countdown-timer');
+        setInterval(() => {
+            if (countdown > 0) {
+                countdown--;
+                const minutes = Math.floor(countdown / 60);
+                const seconds = countdown % 60;
+                timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Change alarm state based on countdown
+                const alarmWidget = document.querySelector('.alarm-state-widget');
+                if (countdown === 0) {
+                    alarmWidget.classList.remove('pending');
+                    alarmWidget.classList.add('triggered');
+                    alarmWidget.querySelector('h2').textContent = '🚨 ALARM TRIGGERED!';
+                }
+            }
+        }, 1000);
+        
+        // Policy Parameter Sliders - sync slider with number input
+        const paramPairs = [
+            ['t_confirm', 't_confirm'],
+            ['t_path', 't_path'],
+            ['session', 'session'],
+            ['dedupe', 'dedupe'],
+            ['confirm_threshold', 'confirm_threshold'],
+            ['signal_min', 'signal_min'],
+            ['loiter_threshold', 'loiter_threshold'],
+            ['loiter_confirm', 'loiter_confirm'],
+            ['package_removal', 'package_removal'],
+            ['path_weight', 'path_weight'],
+            ['dual_camera', 'dual_camera'],
+            ['action_bonus', 'action_bonus'],
+            ['sensor_penalty', 'sensor_penalty']
+        ];
+        
+        paramPairs.forEach(([baseName]) => {
+            const slider = document.getElementById(`${baseName}_slider`);
+            const input = document.getElementById(`${baseName}_value`);
+            
+            if (slider && input) {
+                // Slider changes number input
+                slider.addEventListener('input', (e) => {
+                    input.value = e.target.value;
+                });
+                
+                // Number input changes slider
+                input.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val)) {
+                        slider.value = val;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
