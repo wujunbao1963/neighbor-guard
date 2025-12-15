@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NG Edge Console v2 - Sensor & Topology Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #667eea;
+            --success: #51cf66;
+            --warning: #fab005;
+            --danger: #fa5252;
+            --info: #339af0;
+            --bg-light: #f8f9fa;
+            --text-primary: #212529;
+            --text-secondary: #868e96;
+            --border: #e9ecef;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px;
+        }
+        .header h1 { font-size: 32px; font-weight: 800; }
+        .tabs {
+            display: flex;
+            background: var(--bg-light);
+            border-bottom: 2px solid var(--border);
+            padding: 0 32px;
+            overflow-x: auto;
+        }
+        .tab {
+            padding: 18px 28px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab:hover { color: var(--primary); background: white; }
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: white;
+        }
+        .content { padding: 40px; min-height: 600px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #5568d3; transform: translateY(-2px); }
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 2px solid var(--border);
+        }
+        .btn-secondary:hover { background: #e9ecef; }
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+        }
+        .sensor-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+        .sensor-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.15);
+            transform: translateY(-4px);
+        }
+        .topology-canvas {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 40px;
+            min-height: 500px;
+        }
+        .entry-point {
+            background: white;
+            border: 3px solid var(--danger);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.2s;
+        }
+        .entry-point:hover {
+            transform: scale(1.01);
+            box-shadow: 0 8px 24px rgba(250,82,82,0.15);
+        }
+        .sensor-path {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+        }
+        .add-sensor-btn {
+            width: 100%;
+            padding: 16px;
+            border: 2px dashed var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        .add-sensor-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-style: solid;
+        }
+        .param-group {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ NG Edge Console v2 - 传感器与拓扑管理</h1>
+            <p style="margin-top: 8px; opacity: 0.9;">完整的传感器管理和可视化拓扑构建器</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active">📡 传感器管理</div>
+            <div class="tab">🗺️ 拓扑构建器</div>
+            <div class="tab">⚙️ 检测参数</div>
+        </div>
+        
+        <div class="content">
+            <!-- 传感器管理页面 -->
+            <div class="page active">
+                <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 12px;">传感器管理</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">添加、删除和维护所有传感器与摄像头</p>
+                
+                <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                    <button class="btn" id="addSensorBtn">➕ 添加新传感器</button>
+                    <button class="btn btn-secondary">📥 从文件导入</button>
+                    <button class="btn btn-secondary">📤 导出配置</button>
+                </div>
+                
+                <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">输入设备（传感器）</h3>
+                <div class="sensor-grid" id="sensorGrid"></div>
+                
+                <!-- 输出设备部分 -->
+                <h3 style="font-size: 20px; font-weight: 700; margin: 40px 0 16px 0; color: var(--text-primary);">输出设备（报警执行器）</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">声光报警器、警笛、闪光灯等执行设备</p>
+                
+                <div style="margin-bottom: 24px;">
+                    <button class="btn" id="addOutputBtn">➕ 添加报警输出设备</button>
+                </div>
+                
+                <div class="sensor-grid" id="outputGrid"></div>
+            </div>
+            
+            <!-- 拓扑构建器页面 -->
+            <div class="page">
+                <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 12px;">拓扑构建器</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">通过定义入口点和传感器路径来构建安防拓扑</p>
+                
+                <div style="background: #fff3bf; padding: 20px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid var(--warning);">
+                    <strong>💡 使用方法：</strong>
+                    <ol style="margin-left: 24px; margin-top: 8px; line-height: 1.8;">
+                        <li>点击"添加入口点"创建一个门/窗/车库入口</li>
+                        <li>为每个入口点添加传感器，从室外到室内排列</li>
+                        <li>系统会自动生成事件检测规则（室外检测 → 开门 → 室内运动）</li>
+                    </ol>
+                </div>
+                
+                <div style="margin-bottom: 24px; display: flex; gap: 12px;">
+                    <button class="btn" id="addEntryPointBtn">🚪 添加入口点</button>
+                    <button class="btn btn-secondary">💾 保存拓扑</button>
+                    <button class="btn btn-secondary">📤 导出JSON</button>
+                </div>
+                
+                <div class="topology-canvas" id="topologyCanvas"></div>
+            </div>
+            
+            <!-- 检测参数页面 -->
+            <div class="page">
+                <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 12px;">事件检测参数</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 32px;">配置信号如何关联以预测事件</p>
+                
+                <div class="param-group">
+                    <h3 style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">⏱️ 时间窗口</h3>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            T_confirm - 路径完成窗口
+                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">
+                                （等待完整信号链的最长时间）
+                            </span>
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="30" max="120" value="60" id="tConfirmSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="60" id="tConfirmValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">秒</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">
+                            ℹ️ 从室外检测到室内运动的最大时长。例如：后院检测到人 → 60秒内必须到达室内才能确认入侵
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            徘徊检测阈值
+                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">
+                                （在同一区域停留多久触发可疑事件）
+                            </span>
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="15" max="120" value="30" id="loiterSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="30" id="loiterValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">秒</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="param-group">
+                    <h3 style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">🎚️ 置信度阈值</h3>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            候选 → 确认 阈值
+                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">
+                                （确认事件所需的最低置信度）
+                            </span>
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="50" max="95" value="70" id="confirmSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="70" id="confirmValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">%</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">
+                            ⚖️ 权衡：更低 = 更敏感，更多误报 | 更高 = 更保守，可能漏检
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            信号最低置信度
+                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 13px; margin-left: 8px;">
+                                （忽略低于此值的检测）
+                            </span>
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="30" max="90" value="50" id="signalMinSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="50" id="signalMinValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="param-group">
+                    <h3 style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">⚖️ 评分权重</h3>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            完整路径权重（室外 → 开门 → 室内）
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="50" max="100" value="80" id="pathWeightSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="80" id="pathWeightValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">%</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">
+                            检测到完整路径的基础置信度（加成前）
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <label style="display: block; font-weight: 700; margin-bottom: 8px;">
+                            双摄像头加成
+                        </label>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <input type="range" min="0" max="30" value="14" id="dualCameraSlider" style="flex: 1; height: 6px;">
+                            <input type="number" value="14" id="dualCameraValue" style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-weight: 700;">
+                            <span style="font-size: 14px; width: 40px;">%</span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 8px;">
+                            当2个或更多摄像头都检测到人时的加成。例如：路径80% + 双摄14% = 94%
+                        </p>
+                    </div>
+                </div>
+                
+                <button class="btn" style="font-size: 16px;">✅ 应用更改并运行测试</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 传感器数据
+        let sensors = [
+            { id: 'cam1', name: '后门摄像头', type: 'camera', zone: 'Z4', status: 'online', ip: '192.168.1.101' },
+            { id: 'cam2', name: '前门门铃', type: 'camera', zone: 'Z1', status: 'online', ip: '192.168.1.102' },
+            { id: 'door1', name: '后门传感器', type: 'door', zone: 'EP-BACK', status: 'online', protocol: 'Zigbee' },
+            { id: 'motion1', name: '室内运动传感器', type: 'motion', zone: 'Z7', status: 'online', protocol: 'Zigbee' }
+        ];
+        
+        // 输出设备数据
+        let outputs = [
+            { 
+                id: 'siren1', 
+                name: '室外警笛', 
+                type: 'siren', 
+                location: '前门外墙',
+                status: 'online', 
+                protocol: 'Zigbee',
+                volume: 95,
+                modes: ['PENDING', 'TRIGGERED'],
+                pattern: 'continuous'
+            },
+            { 
+                id: 'strobe1', 
+                name: '后院闪光灯', 
+                type: 'strobe', 
+                location: '后院围栏',
+                status: 'online', 
+                protocol: 'WiFi',
+                brightness: 100,
+                modes: ['PENDING', 'TRIGGERED', 'PRE_INTRUSION'],
+                pattern: 'flash_fast'
+            },
+            { 
+                id: 'combo1', 
+                name: '车库声光报警器', 
+                type: 'siren_strobe', 
+                location: '车库天花板',
+                status: 'online', 
+                protocol: 'Zigbee',
+                volume: 90,
+                brightness: 85,
+                modes: ['PENDING', 'TRIGGERED'],
+                pattern: 'alternating'
+            },
+            {
+                id: 'chime1',
+                name: '门铃提示音',
+                type: 'chime',
+                location: '前门门铃',
+                status: 'online',
+                protocol: 'WiFi',
+                volume: 60,
+                modes: ['PRE_INTRUSION'],
+                pattern: 'gentle_chime'
+            }
+        ];
+        
+        // 拓扑数据
+        let topology = [
+            {
+                id: 'ep1',
+                name: 'EP-FRONT (前门)',
+                icon: '🚪',
+                sensors: [
+                    { name: 'Z1 门铃摄像头', type: 'camera', distance: '马上（0m）' },
+                    { name: 'Z2 门廊摄像头', type: 'camera', distance: '接近（2m）' },
+                    { name: '前门传感器', type: 'door', distance: '入口处' },
+                    { name: 'Z6 室内走廊运动', type: 'motion', distance: '室内（3m）' }
+                ]
+            },
+            {
+                id: 'ep2',
+                name: 'EP-BACK (后门)',
+                icon: '🚪',
+                sensors: [
+                    { name: 'Z5 后院摄像头', type: 'camera', distance: '接近（5m）' },
+                    { name: 'Z4 后门摄像头', type: 'camera', distance: '马上（0m）' },
+                    { name: '后门传感器', type: 'door', distance: '入口处' },
+                    { name: 'Z7 后走廊运动', type: 'motion', distance: '室内（2m）' }
+                ]
+            }
+        ];
+        
+        // 渲染传感器
+        function renderSensors() {
+            const grid = document.getElementById('sensorGrid');
+            const icons = { camera: '📹', door: '🚪', motion: '👁️', window: '🪟' };
+            
+            grid.innerHTML = sensors.map(s => `
+                <div class="sensor-card">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                        <div style="font-size: 32px;">${icons[s.type] || '📡'}</div>
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${s.status === 'online' ? '#51cf66' : '#fa5252'};"></div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${s.name}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">
+                        ${s.type === 'camera' ? 'RTSP' : s.protocol} • Zone: ${s.zone}
+                        ${s.ip ? '<br>' + s.ip : ''}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" style="flex: 1; font-size: 13px; padding: 8px;" onclick="editSensor('${s.id}')">⚙️ 编辑</button>
+                        <button class="btn btn-secondary" style="flex: 1; font-size: 13px; padding: 8px;" onclick="removeSensor('${s.id}')">🗑️ 删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染输出设备
+        function renderOutputs() {
+            const grid = document.getElementById('outputGrid');
+            const icons = { 
+                siren: '🔊', 
+                strobe: '💡', 
+                siren_strobe: '🚨',
+                chime: '🔔'
+            };
+            
+            const typeNames = {
+                siren: '警笛',
+                strobe: '闪光灯',
+                siren_strobe: '声光报警器',
+                chime: '提示音'
+            };
+            
+            grid.innerHTML = outputs.map(o => `
+                <div class="sensor-card" style="border-color: ${o.type === 'chime' ? '#fab005' : '#fa5252'};">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                        <div style="font-size: 32px;">${icons[o.type] || '🔊'}</div>
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${o.status === 'online' ? '#51cf66' : '#fa5252'};"></div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 4px;">${o.name}</div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+                        ${typeNames[o.type]} • ${o.protocol} • ${o.location}
+                    </div>
+                    
+                    <div style="background: var(--bg-light); padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px;">
+                        ${o.volume ? `<div><strong>音量:</strong> ${o.volume} dB</div>` : ''}
+                        ${o.brightness ? `<div><strong>亮度:</strong> ${o.brightness}%</div>` : ''}
+                        <div><strong>触发模式:</strong> ${o.modes.join(', ')}</div>
+                        <div><strong>模式:</strong> ${o.pattern}</div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn" style="flex: 1; font-size: 13px; padding: 8px;" onclick="testOutput('${o.id}')">🧪 测试</button>
+                        <button class="btn" style="flex: 1; font-size: 13px; padding: 8px;" onclick="editOutput('${o.id}')">⚙️ 编辑</button>
+                        <button class="btn btn-secondary" style="flex: 1; font-size: 13px; padding: 8px;" onclick="removeOutput('${o.id}')">🗑️ 删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // 渲染拓扑
+        function renderTopology() {
+            const canvas = document.getElementById('topologyCanvas');
+            const icons = { camera: '📹', door: '🚪', motion: '👁️' };
+            
+            canvas.innerHTML = topology.map(ep => `
+                <div class="entry-point">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="font-size: 36px;">${ep.icon}</div>
+                            <div style="font-size: 20px; font-weight: 700;">${ep.name}</div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="removeEntryPoint('${ep.id}')">🗑️ 删除</button>
+                    </div>
+                    
+                    <div style="font-weight: 700; margin-bottom: 12px; color: var(--text-secondary);">
+                        传感器路径（室外 → 室内）：
+                    </div>
+                    
+                    ${ep.sensors.map((s, i) => `
+                        <div class="sensor-path">
+                            <div style="font-size: 24px;">${icons[s.type] || '📡'}</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 15px;">${s.name}</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">${s.distance}</div>
+                            </div>
+                            ${i < ep.sensors.length - 1 ? '<div style="font-size: 24px; color: var(--text-secondary);">→</div>' : ''}
+                        </div>
+                    `).join('')}
+                    
+                    <button class="add-sensor-btn" onclick="addSensorToPath('${ep.id}')">
+                        ➕ 添加传感器到路径
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        // 事件处理
+        function editSensor(id) {
+            const sensor = sensors.find(s => s.id === id);
+            alert('编辑传感器：' + sensor.name + '\n\n当前设置：\n- Zone: ' + sensor.zone + '\n- 状态: ' + sensor.status);
+        }
+        
+        function removeSensor(id) {
+            if (confirm('确定删除此传感器？这也会将其从拓扑中移除。')) {
+                sensors = sensors.filter(s => s.id !== id);
+                renderSensors();
+            }
+        }
+        
+        function testOutput(id) {
+            const output = outputs.find(o => o.id === id);
+            alert('🧪 测试模式\n\n正在测试：' + output.name + '\n\n将执行：\n- 音量: ' + (output.volume || 'N/A') + ' dB\n- 持续时间: 3秒\n\n（在实际系统中会激活设备）');
+        }
+        
+        function editOutput(id) {
+            const output = outputs.find(o => o.id === id);
+            alert('编辑输出设备：' + output.name + '\n\n当前设置：\n- 位置: ' + output.location + '\n- 触发模式: ' + output.modes.join(', ') + '\n- 音量/亮度可调节');
+        }
+        
+        function removeOutput(id) {
+            if (confirm('确定删除此输出设备？')) {
+                outputs = outputs.filter(o => o.id !== id);
+                renderOutputs();
+            }
+        }
+        
+        function removeEntryPoint(id) {
+            if (confirm('确定删除此入口点及其所有传感器？')) {
+                topology = topology.filter(ep => ep.id !== id);
+                renderTopology();
+            }
+        }
+        
+        function addSensorToPath(epId) {
+            const distance = prompt('设置传感器距离标签：\n例如：\n- "接近（5m）"\n- "马上（0m）"\n- "入口处"\n- "室内（2m）"');
+            if (distance) {
+                const ep = topology.find(e => e.id === epId);
+                ep.sensors.push({
+                    name: '新传感器',
+                    type: 'camera',
+                    distance: distance
+                });
+                renderTopology();
+            }
+        }
+        
+        // 按钮事件
+        document.getElementById('addSensorBtn').onclick = function() {
+            const name = prompt('传感器名称：');
+            if (name) {
+                sensors.push({
+                    id: 'sensor' + Date.now(),
+                    name: name,
+                    type: 'camera',
+                    zone: 'Z-NEW',
+                    status: 'online',
+                    ip: '192.168.1.110'
+                });
+                renderSensors();
+            }
+        };
+        
+        document.getElementById('addOutputBtn').onclick = function() {
+            const name = prompt('输出设备名称（如："前院警笛"）：');
+            if (name) {
+                const type = prompt('设备类型：\n1 = 警笛 (siren)\n2 = 闪光灯 (strobe)\n3 = 声光报警器 (siren_strobe)\n4 = 提示音 (chime)\n\n请输入数字 1-4：');
+                const typeMap = { '1': 'siren', '2': 'strobe', '3': 'siren_strobe', '4': 'chime' };
+                const selectedType = typeMap[type] || 'siren_strobe';
+                
+                outputs.push({
+                    id: 'output' + Date.now(),
+                    name: name,
+                    type: selectedType,
+                    location: '待设置',
+                    status: 'online',
+                    protocol: 'Zigbee',
+                    volume: selectedType !== 'strobe' ? 90 : undefined,
+                    brightness: selectedType !== 'siren' ? 100 : undefined,
+                    modes: ['PENDING', 'TRIGGERED'],
+                    pattern: selectedType === 'siren' ? 'continuous' : 'flash_fast'
+                });
+                renderOutputs();
+            }
+        };
+        
+        document.getElementById('addEntryPointBtn').onclick = function() {
+            const name = prompt('入口点名称（例如："EP-GARAGE"、"EP-WINDOW-FRONT"）：');
+            if (name) {
+                topology.push({
+                    id: 'ep' + Date.now(),
+                    name: name,
+                    icon: '🚪',
+                    sensors: []
+                });
+                renderTopology();
+            }
+        };
+        
+        // Tab切换
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+            tab.onclick = function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.querySelectorAll('.page')[index].classList.add('active');
+            };
+        });
+        
+        // 参数滑块同步
+        const params = [
+            { slider: 'tConfirmSlider', value: 'tConfirmValue' },
+            { slider: 'loiterSlider', value: 'loiterValue' },
+            { slider: 'confirmSlider', value: 'confirmValue' },
+            { slider: 'signalMinSlider', value: 'signalMinValue' },
+            { slider: 'pathWeightSlider', value: 'pathWeightValue' },
+            { slider: 'dualCameraSlider', value: 'dualCameraValue' }
+        ];
+        
+        params.forEach(p => {
+            const slider = document.getElementById(p.slider);
+            const input = document.getElementById(p.value);
+            slider.oninput = function() { input.value = this.value; };
+            input.oninput = function() { slider.value = this.value; };
+        });
+        
+        // 初始化
+        renderSensors();
+        renderOutputs();
+        renderTopology();
+    </script>
+</body>
+</html>
