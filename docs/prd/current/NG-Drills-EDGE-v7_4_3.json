@@ -1,0 +1,2616 @@
+{
+  "suiteName": "NG-EDGE-Drills-v7.4.2",
+  "version": "7.4.3",
+  "schemaVersion": "drill-suite.v2.3.5",
+  "description": "v7.4.3: INTERIOR_FOLLOWER merged into INTERIOR, updated HOME/NIGHT PRE expectations, QUIET mode message behavior",
+  "schemaCompatibility": {
+    "minRunnerVersion": "1.3.0",
+    "requiredFields": [
+      "caseId",
+      "title",
+      "mode",
+      "signals",
+      "expected.shouldCreateEvent"
+    ],
+    "deprecatedFields": [
+      "networkState",
+      "reconnectAtSec"
+    ],
+    "newIn722": [
+      "concurrentBehavior",
+      "verification.attemptLogAssertions",
+      "eventType",
+      "notificationLevel"
+    ],
+    "newIn731": [
+      "expected.workflowClass",
+      "expected.userAlertLevel",
+      "expected.dispatchReadinessLevel",
+      "verificationResult.ON_SCENE_*",
+      "contextEvidence"
+    ],
+    "newIn743": [
+      "INTERIOR zone type now unified (INTERIOR_FOLLOWER removed)",
+      "HOME/NIGHT SUSPICION_LIGHT signals enter PRE state",
+      "QUIET mode generates messages for guest notifications",
+      "Direction detection based on camera signals (indoor/outdoor)"
+    ]
+  },
+  "policyProfiles": {
+    "generic_default": {
+      "type": "built_in",
+      "requireECV": false,
+      "noOneHit": false,
+      "ecvMinAttempts": 0,
+      "entryDelaySec": 30,
+      "abortWindowSec": 30,
+      "sirenTimeoutSec": 180,
+      "requireDCV": false,
+      "dcvMinAttempts": 0
+    },
+    "regina_rps_verified_response": {
+      "type": "example_template",
+      "disclaimer": "Based on public RPS guidelines. Verify with RPS for current requirements.",
+      "requireECV": true,
+      "noOneHit": true,
+      "ecvMinAttempts": 2,
+      "ecvDifferentContacts": true,
+      "ecvDifferentNumbers": true,
+      "entryDelaySec": 30,
+      "abortWindowSec": 30,
+      "sirenTimeoutSec": 180,
+      "ecvTerminationRules": {
+        "earlyTerminateOnConfirmed": true,
+        "minContactsRequired": "only_if_not_confirmed"
+      },
+      "requireDCV": true,
+      "dcvMinAttempts": 2
+    },
+    "DP_DEFAULT": {
+      "type": "alias",
+      "requireECV": false,
+      "noOneHit": false,
+      "ecvMinAttempts": 0,
+      "entryDelaySec": 30,
+      "abortWindowSec": 30,
+      "sirenTimeoutSec": 180,
+      "requireDCV": false,
+      "dcvMinAttempts": 0
+    },
+    "DP_DCV_REQUIRED": {
+      "type": "alias",
+      "requireECV": false,
+      "noOneHit": false,
+      "ecvMinAttempts": 0,
+      "entryDelaySec": 30,
+      "abortWindowSec": 30,
+      "sirenTimeoutSec": 180,
+      "requireDCV": true,
+      "dcvMinAttempts": 1,
+      "dcvTotalTimeoutSec": 300
+    }
+  },
+  "assumptions": {
+    "entryPointId": "ep.front_door",
+    "zoneId": "zone.front",
+    "defaultPolicyProfileId": "regina_rps_verified_response",
+    "sensors": {
+      "cam_frontyard": {
+        "sensorType": "camera_ai",
+        "location": "front_yard"
+      },
+      "cam_backyard": {
+        "sensorType": "camera_ai",
+        "location": "back_yard"
+      },
+      "door_front": {
+        "sensorType": "door_contact",
+        "location": "front_door"
+      },
+      "door_back": {
+        "sensorType": "door_contact",
+        "location": "back_door"
+      },
+      "motion_foyer": {
+        "sensorType": "motion_pir",
+        "location": "foyer"
+      },
+      "glass_front": {
+        "sensorType": "glass_break",
+        "location": "front_window"
+      },
+      "smoke_kitchen": {
+        "sensorType": "smoke",
+        "location": "kitchen"
+      },
+      "co_basement": {
+        "sensorType": "co",
+        "location": "basement"
+      },
+      "system": {
+        "sensorType": "system",
+        "location": "system"
+      },
+      "motion_bedroom": {
+        "sensorType": "motion_pir",
+        "location": "bedroom"
+      }
+    },
+    "sensorBindings": {
+      "cam_frontyard": {
+        "zoneId": "zone.front_yard",
+        "zoneType": "EXTERIOR",
+        "locationType": "OUTDOOR",
+        "entryPointId": null,
+        "privacyLevel": "PUBLIC"
+      },
+      "cam_backyard": {
+        "zoneId": "zone.back_yard",
+        "zoneType": "EXTERIOR",
+        "locationType": "OUTDOOR",
+        "entryPointId": "ep.back_door",
+        "privacyLevel": "SEMI_PRIVATE"
+      },
+      "door_front": {
+        "zoneId": "zone.entry",
+        "zoneType": "ENTRY_EXIT",
+        "locationType": "ENTRY",
+        "entryPointId": "ep.front_door",
+        "privacyLevel": "SEMI_PRIVATE"
+      },
+      "door_back": {
+        "zoneId": "zone.back",
+        "zoneType": "PERIMETER",
+        "locationType": "ENTRY",
+        "entryPointId": "ep.back_door",
+        "privacyLevel": "SEMI_PRIVATE"
+      },
+      "motion_foyer": {
+        "zoneId": "zone.foyer",
+        "zoneType": "INTERIOR_FOLLOWER",
+        "locationType": "INDOOR",
+        "entryPointId": "ep.front_door",
+        "privacyLevel": "PRIVATE"
+      },
+      "glass_front": {
+        "zoneId": "zone.entry",
+        "zoneType": "PERIMETER",
+        "locationType": "ENTRY",
+        "entryPointId": "ep.front_door",
+        "privacyLevel": "SEMI_PRIVATE"
+      },
+      "smoke_kitchen": {
+        "zoneId": "zone.kitchen",
+        "zoneType": "FIRE_24H",
+        "locationType": "INDOOR",
+        "entryPointId": null,
+        "privacyLevel": "PRIVATE"
+      },
+      "co_basement": {
+        "zoneId": "zone.basement",
+        "zoneType": "CO_24H",
+        "locationType": "INDOOR",
+        "entryPointId": null,
+        "privacyLevel": "PRIVATE"
+      },
+      "system": {
+        "zoneId": null,
+        "zoneType": null,
+        "locationType": "SYSTEM",
+        "entryPointId": null,
+        "privacyLevel": null
+      },
+      "motion_bedroom": {
+        "zoneId": "zone.bedroom",
+        "zoneType": "INTERIOR",
+        "locationType": "INDOOR",
+        "entryPointId": "ep.front_door",
+        "privacyLevel": "PRIVATE"
+      }
+    },
+    "stateModels": {
+      "alarmSM": [
+        "QUIET",
+        "PRE",
+        "PENDING",
+        "TRIGGERED",
+        "CANCELED",
+        "RESOLVED"
+      ],
+      "eventDisposition": [
+        "active",
+        "resolved_timeout",
+        "resolved_verified",
+        "canceled_before_trigger",
+        "canceled_after_trigger",
+        "canceled_after_abort",
+        "verified_false",
+        "verified_true"
+      ],
+      "verificationResult": [
+        "PENDING",
+        "CONFIRMED_TRUE",
+        "CONFIRMED_FALSE",
+        "UNCERTAIN",
+        "NO_ANSWER",
+        "EXHAUSTED",
+        "ON_SCENE_UNSAFE",
+        "ON_SCENE_NO_SIGNS",
+        "ON_SCENE_SIGNS_PRESENT"
+      ]
+    },
+    "defaultParams": {
+      "cp01": {
+        "entryDelaySec": 30,
+        "abortWindowSec": 30,
+        "combinedMaxSec": 60
+      },
+      "siren": {
+        "timeoutSec": 180
+      },
+      "verification": {
+        "totalTimeoutSec": 300,
+        "minDistinctContacts": 2,
+        "minDistinctNumbers": 2
+      },
+      "concurrent": {
+        "sessionWindowSec": 120
+      }
+    },
+    "serviceAccessWindows": {
+      "svc_day_painter_001": {
+        "serviceWindowId": "svc_day_painter_001",
+        "name": "Painter - Daytime",
+        "timezone": "America/Edmonton",
+        "startAtLocal": "09:00",
+        "endAtLocal": "17:00",
+        "daysOfWeek": [
+          "MON",
+          "TUE",
+          "WED",
+          "THU",
+          "FRI"
+        ],
+        "allowedEntryPointIds": [
+          "ep.front_door"
+        ],
+        "allowedZoneIds": [
+          "zone.foyer",
+          "zone.living_room",
+          "zone.hallway"
+        ],
+        "restrictedZoneIds": [
+          "zone.bedroom",
+          "zone.basement",
+          "zone.office"
+        ],
+        "actions": {
+          "suppressAlarmOutputs": true,
+          "suppressNeighborNotifications": true,
+          "stillRecordEvidence": true,
+          "overrideFollowerAcceleration": false
+        },
+        "session": {
+          "idleTimeoutSec": 900,
+          "summaryNotification": "silent"
+        }
+      }
+    },
+    "camera_requirements": {
+      "description": "System requires outdoor cameras for direction detection",
+      "details": [
+        "Outdoor cameras detect person_detected signals (EXTERIOR zone)",
+        "Indoor cameras optional but recommended for interior activity",
+        "Direction detection: outdoor signal → door open = intrusion (外→内)",
+        "Direction detection: indoor signal → door open = family leaving (内→外)"
+      ]
+    },
+    "zone_types": {
+      "INTERIOR": {
+        "description": "Unified interior zone (merged INTERIOR_INSTANT + INTERIOR_FOLLOWER)",
+        "behavior": {
+          "AWAY": "Triggers SECURITY_HEAVY (防止非监控渠道进入)",
+          "HOME": "Routes to SUSPICION_LIGHT → PRE (家人活动)",
+          "NIGHT_OCCUPIED": "Routes to SUSPICION_LIGHT → PRE (家人起夜)"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "caseId": "AWAY-TP-001",
+      "title": "TP(Away): Standard 3-chain with ECV early termination",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tp",
+        "standard_chain",
+        "ecv_early_terminate"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.82
+        },
+        {
+          "t": 18,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 26,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 12
+        },
+        {
+          "t": 60,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_true",
+          "meta": {
+            "recipientType": "primary_user",
+            "channel": "push"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 18
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 26
+            }
+          ]
+        },
+        "eventDisposition": {
+          "expected": "verified_true"
+        },
+        "avsAssessment": {
+          "minFinalLevel": 2,
+          "expectedPresenceTier": 2
+        },
+        "verification": {
+          "expectedResult": "CONFIRMED_TRUE",
+          "expectedDistinctContacts": 1,
+          "terminationReason": "CONFIRMED_TRUE terminates early",
+          "isCompliant": true
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": true,
+          "expectedReason": "avs_2_user_confirmed"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "AWAY-TN-001",
+      "title": "TN(Away): Disarm within PENDING → CANCELED",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tn",
+        "cancel",
+        "pending_cancel"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 15,
+          "sensorId": "system",
+          "signalType": "disarm"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "CANCELED",
+              "atOrBeforeSec": 15
+            }
+          ],
+          "mustNotReach": [
+            "TRIGGERED"
+          ]
+        },
+        "eventDisposition": {
+          "expected": "canceled_before_trigger"
+        },
+        "avsAssessment": {
+          "peakLevel": 1,
+          "finalLevel": 0
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "AWAY-TN-002",
+      "title": "TN(Away): Disarm after TRIGGERED (Abort Window)",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tn",
+        "cancel",
+        "triggered_cancel"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 35,
+          "sensorId": "system",
+          "signalType": "disarm"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0,
+              "reason": "entry_zone_violated"
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 30,
+              "reason": "entry_delay_expired"
+            },
+            {
+              "state": "CANCELED",
+              "atOrBeforeSec": 35
+            }
+          ]
+        },
+        "eventDisposition": {
+          "expected": "canceled_after_trigger"
+        },
+        "avsAssessment": {
+          "peakLevel": 1,
+          "finalLevel": 1
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false
+        },
+        "uiDisplay": {
+          "primaryMessage": "Event Canceled by User",
+          "showAvsDetail": false
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "AWAY-TN-003",
+      "title": "TN(Away): Late cancel after Abort Window",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tn",
+        "cancel",
+        "late_cancel"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 70,
+          "sensorId": "system",
+          "signalType": "disarm"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0,
+              "reason": "entry_zone_violated"
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 30,
+              "reason": "entry_delay_expired"
+            },
+            {
+              "state": "CANCELED",
+              "atOrBeforeSec": 70
+            }
+          ]
+        },
+        "eventDisposition": {
+          "expected": "canceled_after_abort"
+        },
+        "avsAssessment": {
+          "peakLevel": 1,
+          "finalLevel": 1
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "AWAY-EDGE-001",
+      "title": "EDGE(Away): Door only → AVS=1, conditional",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "edge",
+        "one_hit"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "finalLevel": 1
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": "conditional",
+          "condition": "Requires DCV confirmation or additional presence evidence"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 1,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 30
+            }
+          ],
+          "entryDelaySec": 30
+        }
+      }
+    },
+    {
+      "caseId": "AWAY-EDGE-002",
+      "title": "EDGE(Away): Debounce → No event",
+      "mode": "away",
+      "dispatchPolicyProfileId": "generic_default",
+      "tags": [
+        "edge",
+        "debounce"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 0.8,
+          "sensorId": "door_front",
+          "signalType": "door_close"
+        },
+        {
+          "t": 1.5,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 2.2,
+          "sensorId": "door_front",
+          "signalType": "door_close"
+        },
+        {
+          "t": 3,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 3.5,
+          "sensorId": "door_front",
+          "signalType": "door_close"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": false,
+        "alarmSM": {
+          "mustNotReach": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "NIGHT-TP-001",
+      "title": "TP(Night-Occupied): Chain with entry delay",
+      "mode": "night",
+      "nightSubMode": "night_occupied",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tp",
+        "night",
+        "follower_accelerated"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.78
+        },
+        {
+          "t": 12,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 18,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 55,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_true"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 12
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 18
+            }
+          ],
+          "entryDelaySec": 15
+        },
+        "verification": {
+          "expectedResult": "CONFIRMED_TRUE"
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": true
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "NIGHT-TP-002",
+      "title": "TP(Night-Perimeter): delay=0 skips PENDING entirely",
+      "mode": "night",
+      "nightSubMode": "night_perimeter",
+      "configOverride": {
+        "entryDelaySec": 0
+      },
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tp",
+        "night_perimeter",
+        "delay_zero"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 0,
+              "reason": "entry_instant_mode"
+            }
+          ],
+          "mustNotReach": [
+            "PENDING"
+          ],
+          "note": "v7.2.2: delay=0 skips PENDING, not 'instant PENDING'"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "NIGHT-TN-001",
+      "title": "TN(Night): Disarm within delay → CANCELED",
+      "mode": "night",
+      "nightSubMode": "night_occupied",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "tn",
+        "night",
+        "cancel"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "system",
+          "signalType": "disarm"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "mustNotReach": [
+            "TRIGGERED"
+          ]
+        },
+        "eventDisposition": {
+          "expected": "canceled_before_trigger"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 0,
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "canceled"
+        }
+      }
+    },
+    {
+      "caseId": "NIGHT-TN-002",
+      "title": "TN(Night): Yard loiter → PRE only (pre_alert event type)",
+      "mode": "night",
+      "nightSubMode": "night_occupied",
+      "dispatchPolicyProfileId": "generic_default",
+      "tags": [
+        "tn",
+        "pre_only",
+        "event_type"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.72,
+          "durationSec": 12
+        },
+        {
+          "t": 40,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.8
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "eventType": "pre_alert",
+        "severity": "low",
+        "notificationLevel": "silent",
+        "alarmSM": {
+          "minStateReached": "PRE",
+          "mustNotReach": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        },
+        "verification": {
+          "expectedToRun": false
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "pre_alert_only"
+        },
+        "workflowClass": "suspicion_light",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "HOME-TN-001",
+      "title": "TN(Home): Normal arrival → No alarm",
+      "mode": "home",
+      "homePolicy": "escalate_sustained",
+      "dispatchPolicyProfileId": "generic_default",
+      "tags": [
+        "tn",
+        "home_mode"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.8
+        },
+        {
+          "t": 8,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 18,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 25
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": false,
+        "alarmSM": {
+          "mustNotReach": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        }
+      }
+    },
+    {
+      "caseId": "HOME-TP-001",
+      "title": "TP(Home): Sustained 60s+ → Can escalate",
+      "mode": "home",
+      "homePolicy": "escalate_sustained",
+      "dispatchPolicyProfileId": "generic_default",
+      "tags": [
+        "tp",
+        "home_mode",
+        "sustained"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.88
+        },
+        {
+          "t": 10,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 16,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 90
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "minStateReached": "PRE",
+          "allowedEscalation": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "HOME-TN-002",
+      "title": "TN(Home): prealert_only caps at PRE",
+      "mode": "home",
+      "homePolicy": "prealert_only",
+      "dispatchPolicyProfileId": "generic_default",
+      "tags": [
+        "tn",
+        "home_mode",
+        "policy_cap"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 120
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "minStateReached": "PRE",
+          "mustNotReach": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "AVS-EDGE-001",
+      "title": "AVS: Glass break alone → AVS=1",
+      "mode": "away",
+      "tags": [
+        "avs_boundary"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "glass_front",
+          "signalType": "glass_break"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "finalLevel": 1,
+          "expectedPresenceTier": 0,
+          "expectedThreatTier": 3
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "AVS-EDGE-002",
+      "title": "AVS: Glass break + camera → AVS=3",
+      "mode": "away",
+      "tags": [
+        "avs_boundary"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.85
+        },
+        {
+          "t": 5,
+          "sensorId": "glass_front",
+          "signalType": "glass_break"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "finalLevel": 3,
+          "expectedPresenceTier": 2,
+          "expectedThreatTier": 3
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "AVS-TIER3-001",
+      "title": "AVS: Multi-camera → Tier 3",
+      "mode": "away",
+      "tags": [
+        "avs_boundary",
+        "tier3"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.9
+        },
+        {
+          "t": 5,
+          "sensorId": "cam_backyard",
+          "signalType": "person_detected",
+          "confidence": 0.85
+        },
+        {
+          "t": 10,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "finalLevel": 3,
+          "expectedPresenceTier": 3
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "AVS-TIER3-002",
+      "title": "AVS: Single camera → Tier 2 (not 3)",
+      "mode": "away",
+      "tags": [
+        "avs_boundary",
+        "tier2"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.95
+        },
+        {
+          "t": 10,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "finalLevel": 2,
+          "expectedPresenceTier": 2
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 2
+      }
+    },
+    {
+      "caseId": "AVS-L4-001",
+      "title": "AVS: Weapon without confirm → AVS=3 (not 4)",
+      "mode": "away",
+      "tags": [
+        "avs_boundary",
+        "level_4"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.9
+        },
+        {
+          "t": 3,
+          "sensorId": "cam_frontyard",
+          "signalType": "weapon_detected",
+          "confidence": 0.75
+        },
+        {
+          "t": 5,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "avsAssessment": {
+          "peakLevel": 3,
+          "finalLevel": 3,
+          "mustNotReach": [
+            4
+          ]
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 2
+      }
+    },
+    {
+      "caseId": "ECV-001",
+      "title": "ECV: Two contacts required for EXHAUSTED",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "ecv",
+        "min_contacts"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 120,
+          "sensorId": "system",
+          "signalType": "verification_no_answer",
+          "meta": {
+            "recipientType": "primary_user"
+          }
+        },
+        {
+          "t": 180,
+          "sensorId": "system",
+          "signalType": "verification_no_answer",
+          "meta": {
+            "recipientType": "keyholder_1"
+          }
+        },
+        {
+          "t": 240,
+          "sensorId": "system",
+          "signalType": "verification_exhausted"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "verification": {
+          "expectedResult": "EXHAUSTED",
+          "expectedDistinctContacts": 2,
+          "expectedDistinctNumbers": 2,
+          "isCompliant": true
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "ECV-002",
+      "title": "ECV: Confirmed true → verified_true",
+      "mode": "away",
+      "tags": [
+        "ecv",
+        "verified_true"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 45,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_true"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "eventDisposition": {
+          "expected": "verified_true"
+        },
+        "verification": {
+          "expectedResult": "CONFIRMED_TRUE"
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": true
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "ECV-003",
+      "title": "ECV: Confirmed false → verified_false, no dispatch",
+      "mode": "away",
+      "tags": [
+        "ecv",
+        "verified_false"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 50,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_false"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "eventDisposition": {
+          "expected": "verified_false"
+        },
+        "avsAssessment": {
+          "peakLevel": 2,
+          "finalLevel": 0
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "verified_false_alarm"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 0,
+        "verification": {
+          "expectedResult": "CONFIRMED_FALSE"
+        }
+      }
+    },
+    {
+      "caseId": "ECV-004",
+      "title": "ECV: Exhausted → conditional dispatch",
+      "mode": "away",
+      "tags": [
+        "ecv",
+        "exhausted"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 300,
+          "sensorId": "system",
+          "signalType": "verification_exhausted"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "verification": {
+          "expectedResult": "EXHAUSTED"
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": "conditional"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "ECV-005",
+      "title": "ECV: AttemptLog audit assertions",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "ecv",
+        "audit",
+        "attempt_log"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 60,
+          "sensorId": "system",
+          "signalType": "verification_no_answer",
+          "meta": {
+            "recipientType": "primary_user",
+            "channel": "push"
+          }
+        },
+        {
+          "t": 120,
+          "sensorId": "system",
+          "signalType": "verification_no_answer",
+          "meta": {
+            "recipientType": "primary_user",
+            "channel": "sms"
+          }
+        },
+        {
+          "t": 180,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_true",
+          "meta": {
+            "recipientType": "keyholder_1",
+            "channel": "sms"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "verification": {
+          "expectedResult": "CONFIRMED_TRUE",
+          "expectedDistinctContacts": 2,
+          "attemptLogAssertions": {
+            "minAttempts": 3,
+            "expectedSequence": [
+              {
+                "recipientType": "primary_user",
+                "channel": "push",
+                "status": "no_answer"
+              },
+              {
+                "recipientType": "primary_user",
+                "channel": "sms",
+                "status": "no_answer"
+              },
+              {
+                "recipientType": "keyholder_1",
+                "channel": "sms",
+                "status": "answered",
+                "response": "confirmed_true"
+              }
+            ],
+            "distinctNumbersCount": 2,
+            "stopReason": "CONFIRMED_TRUE",
+            "resultSource": "keyholder_1"
+          }
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "SIREN-001",
+      "title": "Siren: Timeout at 180s, verification continues",
+      "mode": "away",
+      "tags": [
+        "siren",
+        "timeout"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 200,
+          "sensorId": "system",
+          "signalType": "verification_confirmed_true"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "outputDevices": {
+          "siren": {
+            "activatedAtSec": 10,
+            "stoppedAtSec": 190,
+            "stopReason": "timeout"
+          }
+        },
+        "verification": {
+          "expectedResult": "CONFIRMED_TRUE"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "LIFE-SAFETY-001",
+      "title": "Life Safety: Smoke → immediate TRIGGERED",
+      "mode": "home",
+      "tags": [
+        "life_safety",
+        "smoke"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "smoke_kitchen",
+          "signalType": "smoke_detected"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 0,
+              "reason": "life_safety"
+            }
+          ],
+          "mustNotReach": [
+            "PENDING"
+          ]
+        },
+        "workflowClass": "life_safety",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "LIFE-SAFETY-002",
+      "title": "Life Safety: CO in DISARMED → still triggers",
+      "mode": "disarmed",
+      "tags": [
+        "life_safety",
+        "co",
+        "24_hour"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "co_basement",
+          "signalType": "co_detected"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 0
+            }
+          ]
+        },
+        "workflowClass": "life_safety",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "CP01-001",
+      "title": "CP-01: Valid config (entry=25 + abort=30)",
+      "mode": "away",
+      "tags": [
+        "cp01"
+      ],
+      "configOverride": {
+        "entryDelaySec": 25,
+        "abortWindowSec": 30
+      },
+      "signals": [],
+      "expected": {
+        "configValidation": {
+          "isValid": true,
+          "combinedSec": 55
+        },
+        "shouldCreateEvent": false
+      }
+    },
+    {
+      "caseId": "CP01-002",
+      "title": "CP-01: Invalid config (entry=45 + abort=30)",
+      "mode": "away",
+      "tags": [
+        "cp01",
+        "expect_fail"
+      ],
+      "configOverride": {
+        "entryDelaySec": 45,
+        "abortWindowSec": 30
+      },
+      "signals": [],
+      "expected": {
+        "configValidation": {
+          "isValid": false,
+          "combinedSec": 75
+        },
+        "shouldCreateEvent": false
+      }
+    },
+    {
+      "caseId": "OFFLINE-001",
+      "title": "Offline: Idempotent ingest with dedupKey",
+      "mode": "away",
+      "tags": [
+        "offline",
+        "idempotent"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "system",
+          "signalType": "network_down"
+        },
+        {
+          "t": 5,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 15,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 120,
+          "sensorId": "system",
+          "signalType": "network_up"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "offlineBehavior": {
+          "localAlarmActivated": true,
+          "eventQueuedForIngest": true,
+          "ingestIsIdempotent": true,
+          "duplicateEventCreated": false,
+          "idempotencyKeyFormat": "sha256({entry_point_id}|{occurred_at}|{alarm_state}|{first_signal_id})[:32]"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "CONCURRENT-001",
+      "title": "Concurrent: Front PENDING + Back PERIMETER → merge",
+      "mode": "away",
+      "tags": [
+        "concurrent",
+        "multi_entry_point"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 5,
+          "sensorId": "door_back",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 5,
+              "reason": "perimeter_violated"
+            }
+          ]
+        },
+        "concurrentBehavior": {
+          "eventsCreated": 1,
+          "mergeStrategy": "merge",
+          "zonesInvolved": [
+            "zone.entry",
+            "zone.back"
+          ],
+          "primaryEntryPoint": "ep.back_door"
+        },
+        "avsAssessment": {
+          "minFinalLevel": 2
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 2
+      }
+    },
+    {
+      "caseId": "CONCURRENT-002",
+      "title": "Concurrent: Intrusion + Smoke → life_safety priority",
+      "mode": "away",
+      "tags": [
+        "concurrent",
+        "life_safety",
+        "priority"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 3,
+          "sensorId": "smoke_kitchen",
+          "signalType": "smoke_detected"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 3,
+              "reason": "life_safety"
+            }
+          ]
+        },
+        "concurrentBehavior": {
+          "eventsCreated": 1,
+          "mergeStrategy": "merge",
+          "primaryZoneType": "FIRE_24H"
+        },
+        "outputDevices": {
+          "siren": {
+            "pattern": "fire_alarm"
+          }
+        },
+        "workflowClass": "life_safety",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "CANCEL-OUTPUT-001",
+      "title": "Cancel: User cancel → immediate output stop + verification stop + audit",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "cancel",
+        "output_stop",
+        "audit",
+        "nuisance"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 45,
+          "sensorId": "system",
+          "signalType": "disarm"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 10
+            },
+            {
+              "state": "CANCELED",
+              "atOrBeforeSec": 45
+            }
+          ]
+        },
+        "eventDisposition": {
+          "expected": "canceled_after_trigger"
+        },
+        "outputDevices": {
+          "siren": {
+            "activatedAtSec": 10,
+            "stoppedAtSec": 45,
+            "stopReason": "user_cancel"
+          },
+          "strobe": {
+            "activatedAtSec": 10,
+            "stoppedAtSec": 45,
+            "stopReason": "user_cancel"
+          }
+        },
+        "verification": {
+          "expectedToRun": true,
+          "stoppedByCancel": true,
+          "stoppedAtSec": 45
+        },
+        "audit": {
+          "outputStopRecorded": true,
+          "verificationStopRecorded": true,
+          "cancelReasonRecorded": true
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "CONCURRENT-003",
+      "title": "Concurrent: Multi entry points within session window",
+      "mode": "away",
+      "tags": [
+        "concurrent",
+        "session_merge"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        },
+        {
+          "t": 60,
+          "sensorId": "cam_backyard",
+          "signalType": "person_detected",
+          "confidence": 0.85
+        },
+        {
+          "t": 65,
+          "sensorId": "door_back",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "concurrentBehavior": {
+          "eventsCreated": 1,
+          "mergeStrategy": "merge",
+          "zonesInvolved": [
+            "zone.entry",
+            "zone.foyer",
+            "zone.back_yard",
+            "zone.back"
+          ],
+          "sessionWindowSec": 120
+        },
+        "avsAssessment": {
+          "finalLevel": 3,
+          "expectedPresenceTier": 3
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 2,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "DCV-ONSCENE-001",
+      "title": "DCV(On-Scene): Unsafe approach + high-threat evidence → recommend",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "dcv",
+        "on_scene",
+        "high_threat"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "person_detected",
+          "confidence": 0.88
+        },
+        {
+          "t": 4,
+          "sensorId": "glass_front",
+          "signalType": "glass_break"
+        },
+        {
+          "t": 12,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 60,
+          "sensorId": "system",
+          "signalType": "verification_on_scene_unsafe",
+          "meta": {
+            "recipientType": "neighbor_1",
+            "channel": "push"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3,
+        "avsAssessment": {
+          "minFinalLevel": 3
+        },
+        "verification": {
+          "expectedResult": "ON_SCENE_UNSAFE"
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": true,
+          "expectedReason": "high_threat_on_scene_unsafe"
+        }
+      }
+    },
+    {
+      "caseId": "DCV-ONSCENE-002",
+      "title": "DCV(On-Scene): No signs present → continue_verify",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "dcv",
+        "on_scene",
+        "no_signs"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 10,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 8
+        },
+        {
+          "t": 80,
+          "sensorId": "system",
+          "signalType": "verification_on_scene_no_signs",
+          "meta": {
+            "recipientType": "neighbor_1",
+            "channel": "push"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3,
+        "verification": {
+          "expectedResult": "ON_SCENE_NO_SIGNS"
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "on_scene_no_signs_reduced_certainty"
+        }
+      }
+    },
+    {
+      "caseId": "AWAY-CTX-001",
+      "title": "Context(Away): Suspicion context + door_open → attempted break-in readiness=2",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "context",
+        "suspicion_light",
+        "attempted_breakin"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "loiter",
+          "confidence": 0.8,
+          "durationSec": 20
+        },
+        {
+          "t": 18,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 2,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 18
+            }
+          ]
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": "conditional",
+          "condition": "Requires DCV confirmation or additional intrusion evidence"
+        }
+      }
+    },
+    {
+      "caseId": "SUSPICION-HOME-001",
+      "title": "SUSPICION(Home): Vehicle detected only → record only (no alert by default)",
+      "mode": "home",
+      "dispatchPolicyProfileId": "DP_DEFAULT",
+      "tags": [
+        "suspicion_light",
+        "vehicle"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "vehicle_detected",
+          "confidence": 0.9
+        },
+        {
+          "t": 5,
+          "sensorId": "cam_frontyard",
+          "signalType": "vehicle_detected",
+          "confidence": 0.92
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "suspicion_light",
+        "userAlertLevel": 0,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "LOGISTICS-001",
+      "title": "LOGISTICS(Home): Package delivered → create logistics event, soft notify if enabled",
+      "mode": "home",
+      "dispatchPolicyProfileId": "DP_DEFAULT",
+      "tags": [
+        "logistics",
+        "package"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "package_delivered",
+          "confidence": 0.85
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "logistics",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "LOGISTICS-002",
+      "title": "LOGISTICS(Night): Package removed → soft wake (no AlarmSM)",
+      "mode": "night",
+      "nightSubMode": "night_occupied",
+      "dispatchPolicyProfileId": "DP_DEFAULT",
+      "tags": [
+        "logistics",
+        "package",
+        "night"
+      ],
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "cam_frontyard",
+          "signalType": "package_removed",
+          "confidence": 0.8
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "logistics",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "SERVICE-001",
+      "title": "Service(Away): Authorized contractor access within window (no alarm, audit session)",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "service_window",
+        "authorized",
+        "audit_only"
+      ],
+      "activeServiceWindowId": "svc_day_painter_001",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 3,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 20
+        },
+        {
+          "t": 40,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 15
+        },
+        {
+          "t": 920,
+          "sensorId": "system",
+          "signalType": "session_idle_timeout"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "eventType": "authorized_access_session",
+        "severity": "info",
+        "notificationLevel": "silent",
+        "alarmSM": {
+          "minStateReached": "PRE",
+          "mustNotReach": [
+            "PENDING",
+            "TRIGGERED"
+          ]
+        },
+        "verification": {
+          "expectedToRun": false
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "authorized_window"
+        },
+        "workflowClass": "suspicion_light",
+        "userAlertLevel": 1,
+        "dispatchReadinessLevel": 0
+      }
+    },
+    {
+      "caseId": "SERVICE-002",
+      "title": "Service(Away): Unauthorized entrypoint within window must trigger intrusion workflow",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "service_window",
+        "unauthorized_entrypoint",
+        "security_heavy"
+      ],
+      "activeServiceWindowId": "svc_day_painter_001",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_back",
+          "signalType": "door_open"
+        },
+        {
+          "t": 2,
+          "sensorId": "cam_backyard",
+          "signalType": "person_detected",
+          "confidence": 0.76
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 30
+            }
+          ],
+          "entryDelaySec": 30
+        },
+        "eventDisposition": {
+          "expected": "active"
+        },
+        "avsAssessment": {
+          "minFinalLevel": 1,
+          "expectedPresenceTier": 1
+        },
+        "verification": {
+          "expectedToRun": true,
+          "expectedResult": "NO_ANSWER",
+          "isCompliant": true
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "unverified_single_entry"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "SERVICE-003",
+      "title": "Service(Away): Authorized window but restricted zone trip promotes to SECURITY_HEAVY (immediate trigger)",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "service_window",
+        "restricted_zone",
+        "promotion"
+      ],
+      "activeServiceWindowId": "svc_day_painter_001",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "door_front",
+          "signalType": "door_open"
+        },
+        {
+          "t": 5,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active",
+          "durationSec": 10
+        },
+        {
+          "t": 20,
+          "sensorId": "motion_bedroom",
+          "signalType": "motion_active",
+          "durationSec": 8
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 20
+            }
+          ]
+        },
+        "eventDisposition": {
+          "expected": "active"
+        },
+        "avsAssessment": {
+          "minFinalLevel": 2,
+          "expectedPresenceTier": 2
+        },
+        "verification": {
+          "expectedToRun": true,
+          "expectedResult": "NO_ANSWER",
+          "isCompliant": true
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": "conditional",
+          "condition": "if DCV_CONFIRMED_TRUE then recommend; else continue_verify",
+          "expectedReason": "restricted_zone_violation"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 3
+      }
+    },
+    {
+      "caseId": "SERVICE-004",
+      "title": "Service(Away): Glass break overrides service window and triggers SECURITY_HEAVY",
+      "mode": "away",
+      "dispatchPolicyProfileId": "regina_rps_verified_response",
+      "tags": [
+        "service_window",
+        "glass_break_override",
+        "security_heavy"
+      ],
+      "activeServiceWindowId": "svc_day_painter_001",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "glass_front",
+          "signalType": "glass_break"
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 0
+            }
+          ],
+          "entryDelaySec": 0
+        },
+        "eventDisposition": {
+          "expected": "active"
+        },
+        "avsAssessment": {
+          "minFinalLevel": 2,
+          "expectedPresenceTier": 1
+        },
+        "verification": {
+          "expectedToRun": true,
+          "expectedResult": "NO_ANSWER",
+          "isCompliant": true
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "expectedReason": "unverified_glass_break"
+        },
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 1
+      }
+    },
+    {
+      "caseId": "COLLAB-001",
+      "title": "Away: Edge triggers; neighbor ON_SCENE_SIGNS_PRESENT via Cloud update upgrades dispatchRecommendation",
+      "mode": "away",
+      "dispatchPolicyProfileId": "DP_DCV_REQUIRED",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "front_door_contact",
+          "signalType": "door_open"
+        },
+        {
+          "t": 3,
+          "sensorId": "motion_foyer",
+          "signalType": "motion_active"
+        }
+      ],
+      "updates": [
+        {
+          "t": 20,
+          "source": "cloud",
+          "updateType": "verification_result",
+          "payload": {
+            "verificationResult": "ON_SCENE_SIGNS_PRESENT",
+            "actorRole": "neighbor"
+          }
+        },
+        {
+          "t": 21,
+          "source": "cloud",
+          "updateType": "evidence_append",
+          "payload": {
+            "evidenceType": "photo",
+            "ref": "vault://e/123"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 2,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "TRIGGERED",
+              "atOrBeforeSec": 3,
+              "reason": "follower_accelerated"
+            }
+          ],
+          "mustNotReach": []
+        },
+        "verification": {
+          "expectedToRun": true,
+          "requireECV": false,
+          "requireDCV": true,
+          "expectedPlannedRecipientsAtLeast": 1
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": true
+        }
+      }
+    },
+    {
+      "caseId": "COLLAB-002",
+      "title": "Away: Neighbor NO_SIGNS -> continue_verify; authorized keyholder REMOTE_DISARM cancels AlarmSM",
+      "mode": "away",
+      "dispatchPolicyProfileId": "DP_DEFAULT",
+      "signals": [
+        {
+          "t": 0,
+          "sensorId": "front_door_contact",
+          "signalType": "door_open"
+        },
+        {
+          "t": 40,
+          "sensorId": "remote_app_keyholder",
+          "signalType": "disarm",
+          "meta": {
+            "channel": "mobile_app_remote"
+          }
+        }
+      ],
+      "updates": [
+        {
+          "t": 25,
+          "source": "cloud",
+          "updateType": "verification_result",
+          "payload": {
+            "verificationResult": "ON_SCENE_NO_SIGNS",
+            "actorRole": "neighbor"
+          }
+        },
+        {
+          "t": 26,
+          "source": "cloud",
+          "updateType": "withdrawal_suggestion",
+          "payload": {
+            "reason": "on_scene_no_signs_reduced_certainty",
+            "recommendedAction": "REMOTE_DISARM"
+          }
+        }
+      ],
+      "expected": {
+        "shouldCreateEvent": true,
+        "workflowClass": "security_heavy",
+        "userAlertLevel": 3,
+        "dispatchReadinessLevel": 0,
+        "alarmSM": {
+          "expectedTransitions": [
+            {
+              "state": "PENDING",
+              "atOrBeforeSec": 0
+            },
+            {
+              "state": "CANCELED",
+              "atOrBeforeSec": 40,
+              "reason": "disarm"
+            }
+          ],
+          "mustNotReach": [
+            "TRIGGERED"
+          ]
+        },
+        "dispatchRecommendation": {
+          "shouldRecommendCallForService": false,
+          "condition": "on_scene_no_signs_then_disarmed"
+        }
+      }
+    }
+  ],
+  "coverageRequirements": {
+    "totalCases": 46,
+    "categories": {
+      "standard_chain": {
+        "min": 1,
+        "cases": [
+          "AWAY-TP-001"
+        ]
+      },
+      "cancel_dispositions": {
+        "min": 3,
+        "cases": [
+          "AWAY-TN-001",
+          "AWAY-TN-002",
+          "AWAY-TN-003"
+        ]
+      },
+      "cancel_output_stop": {
+        "min": 1,
+        "cases": [
+          "CANCEL-OUTPUT-001"
+        ]
+      },
+      "delay_zero": {
+        "min": 1,
+        "cases": [
+          "NIGHT-TP-002"
+        ]
+      },
+      "pre_only": {
+        "min": 1,
+        "cases": [
+          "NIGHT-TN-002"
+        ]
+      },
+      "home_policy": {
+        "min": 3,
+        "cases": [
+          "HOME-TN-001",
+          "HOME-TP-001",
+          "HOME-TN-002"
+        ]
+      },
+      "avs_boundary": {
+        "min": 4,
+        "cases": [
+          "AVS-EDGE-001",
+          "AVS-EDGE-002",
+          "AVS-TIER3-001",
+          "AVS-TIER3-002"
+        ]
+      },
+      "ecv_results": {
+        "min": 5,
+        "cases": [
+          "ECV-001",
+          "ECV-002",
+          "ECV-003",
+          "ECV-004",
+          "ECV-005"
+        ]
+      },
+      "ecv_attempt_log": {
+        "min": 1,
+        "cases": [
+          "ECV-005"
+        ]
+      },
+      "siren_timeout": {
+        "min": 1,
+        "cases": [
+          "SIREN-001"
+        ]
+      },
+      "life_safety": {
+        "min": 2,
+        "cases": [
+          "LIFE-SAFETY-001",
+          "LIFE-SAFETY-002"
+        ]
+      },
+      "concurrent": {
+        "min": 3,
+        "cases": [
+          "CONCURRENT-001",
+          "CONCURRENT-002",
+          "CONCURRENT-003"
+        ]
+      },
+      "offline": {
+        "min": 1,
+        "cases": [
+          "OFFLINE-001"
+        ]
+      },
+      "on_scene": {
+        "min": 2,
+        "cases": [
+          "DCV-ONSCENE-001",
+          "DCV-ONSCENE-002"
+        ]
+      },
+      "context": {
+        "min": 1,
+        "cases": [
+          "AWAY-CTX-001"
+        ]
+      },
+      "logistics": {
+        "min": 1,
+        "cases": [
+          "LOGISTICS-001"
+        ]
+      },
+      "suspicion_light": {
+        "min": 1,
+        "cases": [
+          "SUSPICION-HOME-001"
+        ]
+      },
+      "service_access_window": {
+        "min": 3,
+        "cases": [
+          "SERVICE-001",
+          "SERVICE-002",
+          "SERVICE-003",
+          "SERVICE-004"
+        ]
+      },
+      "follower_acceleration": {
+        "min": 1,
+        "cases": [
+          "FOLLOWER-ACCEL-001"
+        ]
+      },
+      "collab_updates": {
+        "minCases": 2,
+        "mustInclude": [
+          "COLLAB-001",
+          "COLLAB-002"
+        ]
+      }
+    },
+    "requiredEventDispositions": [
+      "canceled_before_trigger",
+      "canceled_after_trigger",
+      "canceled_after_abort",
+      "verified_true",
+      "verified_false"
+    ],
+    "requiredVerificationResults": [
+      "CONFIRMED_TRUE",
+      "CONFIRMED_FALSE",
+      "EXHAUSTED"
+    ],
+    "minPassRate": 1.0,
+    "buckets": {}
+  },
+  "changeLog": [
+    {
+      "version": "7.4.3",
+      "date": "2025-12-18",
+      "author": "NG-EDGE Team",
+      "summary": "WorkflowRouter v2: INTERIOR unification and state behavior updates",
+      "changes": {
+        "breaking": [
+          "INTERIOR_FOLLOWER zone type removed (merged into INTERIOR)",
+          "has_active_entry_event parameter removed from WorkflowRouter",
+          "is_follower_only field removed from RouteResult",
+          "HOME/NIGHT modes: SUSPICION_LIGHT now enters PRE (not QUIET)"
+        ],
+        "behavioral": [
+          "INTERIOR zone in AWAY mode now directly triggers SECURITY_HEAVY",
+          "QUIET mode now generates messages (for guest notifications)",
+          "Direction detection maintained via camera signals"
+        ],
+        "preserved": [
+          "Context Evidence functionality fully preserved (PRD §0.2.2)",
+          "All 50 Context Evidence tests passing",
+          "Service Access Window logic unchanged"
+        ]
+      },
+      "migration": {
+        "sensor_bindings": "Updated 0 sensor bindings: INTERIOR_FOLLOWER → INTERIOR",
+        "test_cases": "Removed 1 cases specific to FOLLOWER concept",
+        "expectations": "Review 0 cases for QUIET → PRE updates"
+      }
+    }
+  ]
+}

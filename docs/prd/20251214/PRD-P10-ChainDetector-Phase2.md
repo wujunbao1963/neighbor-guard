@@ -111,21 +111,76 @@ BASE_WEIGHTS = {
 OUTDOOR_MOTION_WEIGHT = 0.6
 ```
 
-### 2.3 模式乘数 (modeMultiplier)
+### 2.3 三区域类型 (Zone Location Type)
 
-不同模式下，同一信号的重要性不同：
+为了正确处理门磁等边界传感器，系统采用三区域类型：
 
-| 模式 | 室外信号乘数 | 入口信号乘数 | 室内信号乘数 |
-|------|--------------|--------------|--------------|
-| **DISARMED** | 0.0 | 0.0 | 0.0 |
-| **HOME** | 1.0 | 0.5 | 0.0 |
-| **AWAY** | 1.2 | 1.5 | 1.5 |
-| **NIGHT** | 1.0 | 1.2 | 1.2 |
+```
+┌─────────────────────────────────────────────────────┐
+│                                                     │
+│   OUTDOOR          ENTRY           INDOOR           │
+│   (室外)           (边界)          (室内)            │
+│                                                     │
+│   - 室外摄像头      - 门磁          - 室内运动        │
+│   - 车道PIR        - 窗磁          - 室内摄像头       │
+│   - 围栏传感器      - 玻璃破碎       - 烟雾探测器      │
+│   - 室外运动        - 门锁传感器                      │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+         ↓              ↓              ↓
+      入侵接近        入侵进入        入侵确认
+```
 
-**说明：**
-- HOME 模式：只关注室外，入口降权，室内忽略
-- AWAY 模式：全面监控，入口和室内加权
-- NIGHT 模式：类似 AWAY 但稍低敏感度
+**区域类型定义：**
+
+| 类型 | 英文 | 说明 | 典型传感器 |
+|------|------|------|------------|
+| 室外 | `outdoor` | 房屋外部区域 | 室外摄像头、车道PIR、围栏传感器 |
+| 边界 | `entry` | 房屋入口边界 | 门磁、窗磁、玻璃破碎、智能门锁 |
+| 室内 | `indoor` | 房屋内部区域 | 室内运动、室内摄像头、烟雾探测器 |
+
+**为什么门磁不能算室内？**
+
+```
+场景: Home 模式下有人从前门闯入
+
+如果门磁 = indoor (室内):
+  outdoor_cam 检测人 → Pre-Alert
+  door_sensor 开门 → 被忽略 (indoor multiplier=0) ❌
+  结果: 永远卡在 Pre-Alert，无法确认入侵！
+
+如果门磁 = entry (边界):
+  outdoor_cam 检测人 → 贡献 1.0
+  door_sensor 开门 → 贡献 1.2 ✅
+  结果: 正确触发 Warning/Alarm
+```
+
+### 2.4 模式乘数 (modeMultiplier)
+
+不同模式下，三种区域的信号权重不同：
+
+| 模式 | outdoor | entry | indoor | 说明 |
+|------|---------|-------|--------|------|
+| **DISARMED** | 0.0 | 0.0 | 0.0 | 完全不监控 |
+| **HOME** | 1.0 | 1.2 | 0.0 | 监控室外+边界，忽略室内 |
+| **AWAY** | 1.2 | 1.5 | 1.5 | 全面监控，边界和室内加权 |
+| **NIGHT** | 1.0 | 1.3 | 1.2 | 类似AWAY，稍低敏感度 |
+
+**模式行为说明：**
+
+| 模式 | 典型场景 | 监控逻辑 |
+|------|----------|----------|
+| **DISARMED** | 日常在家 | 不检测任何入侵 |
+| **HOME** | 白天在家 | 检测外部接近+门窗打开，忽略室内走动 |
+| **AWAY** | 外出/度假 | 全面高敏感度监控 |
+| **NIGHT** | 夜间睡眠 | 全面监控，室内稍低（允许起夜） |
+
+**Home 模式详细逻辑：**
+- ✅ 室外摄像头检测到人 → 贡献计入
+- ✅ 门磁/窗磁触发 → 贡献计入 (边界!)
+- ✅ 玻璃破碎 → 贡献计入 (边界!)
+- ❌ 室内运动 → 忽略 (家人走动)
+- ❌ 室内摄像头 → 忽略
 
 ### 2.4 链位置加成 (chainPositionBonus)
 
@@ -257,11 +312,12 @@ class ChainDetectorConfig:
         ("glass_break", "glass_break"): 2.5,
     })
     
-    # 模式乘数
+    # 模式乘数 (按区域类型)
     mode_multipliers: dict[str, dict[str, float]] = field(default_factory=lambda: {
+        "disarmed": {"outdoor": 0.0, "entry": 0.0, "indoor": 0.0},
+        "home": {"outdoor": 1.0, "entry": 1.2, "indoor": 0.0},
         "away": {"outdoor": 1.2, "entry": 1.5, "indoor": 1.5},
-        "home": {"outdoor": 1.0, "entry": 0.5, "indoor": 0.0},
-        "night": {"outdoor": 1.0, "entry": 1.2, "indoor": 1.2},
+        "night": {"outdoor": 1.0, "entry": 1.3, "indoor": 1.2},
     })
     
     # 链位置加成
@@ -409,19 +465,56 @@ T=120s: (无新信号)
 结果: 单次室外 PIR 触发不会产生任何警报
 ```
 
-### 5.3 Home 模式下室内运动
+### 5.3 Home 模式下的检测
 
+**场景 A: 室内运动（忽略）**
 ```
 Entry Point: Front Door
-Chain: [outdoor_cam, door_sensor, indoor_motion]
+Chain: [outdoor_cam (outdoor), door_sensor (entry), indoor_motion (indoor)]
 Mode: HOME
 
 T=0s:  indoor_motion 检测到 motion (confidence=0.9)
-       base_weight=1.0, mode_mult=0.0 (HOME模式室内=0)
+       base_weight=1.0, mode_mult=0.0 (HOME模式 indoor=0)
        contribution = 1.0 × 0.9 × 0.0 × 1.0 = 0
        score: 0 (无变化)
 
-结果: Home 模式下室内运动被完全忽略
+结果: Home 模式下室内运动被完全忽略 ✅
+```
+
+**场景 B: 门磁触发（有效）**
+```
+Entry Point: Front Door  
+Chain: [outdoor_cam (outdoor), door_sensor (entry), indoor_motion (indoor)]
+Mode: HOME
+
+T=0s:  door_sensor 触发 door_open (confidence=1.0)
+       base_weight=1.8, mode_mult=1.2 (HOME模式 entry=1.2)
+       contribution = 1.8 × 1.0 × 1.2 × 1.0 = 2.16
+       score: 0 → 2.16 (PRE_ALERT! score >= 1.5)
+
+结果: Home 模式下门磁触发会预警 ✅
+```
+
+**场景 C: 完整入侵流程（Home模式）**
+```
+Entry Point: Front Door
+Chain: [outdoor_cam (outdoor), door_sensor (entry), indoor_motion (indoor)]
+Mode: HOME
+
+T=0s:  outdoor_cam 检测到 person (confidence=0.85)
+       base_weight=1.2, mode_mult=1.0 (HOME outdoor=1.0)
+       contribution = 1.2 × 0.85 × 1.0 × 1.0 = 1.02
+       score: 0 → 1.02 (IDLE, < 1.5)
+
+T=5s:  door_sensor 触发 door_open (confidence=1.0)
+       衰减: 1.02 × exp(-5/90) = 0.96
+       base_weight=1.8, mode_mult=1.2 (HOME entry=1.2), chain_bonus=1.3
+       contribution = 1.8 × 1.0 × 1.2 × 1.3 = 2.81
+       score: 0.96 + 2.81 = 3.77 (ALARM! score >= 3.5)
+
+T=8s:  indoor_motion 触发 (但被忽略，multiplier=0)
+
+结果: outdoor + entry 两个信号即可触发 ALARM ✅
 ```
 
 ---
@@ -443,7 +536,20 @@ T=0s:  indoor_motion 检测到 motion (confidence=0.9)
 
 ### 6.3 数据库变更
 
-无。状态为内存运行时，证据账本嵌入事件的 `trace_summary` 或 `metadata`。
+**Zone 表新增字段：**
+```sql
+ALTER TABLE zones ADD COLUMN location_type TEXT DEFAULT 'indoor';
+-- 可选值: 'outdoor', 'entry', 'indoor'
+```
+
+**Sensor 表：**
+- 传感器继承所属 Zone 的 `location_type`
+- 或可在 sensor 级别覆盖 (可选)
+
+**迁移策略：**
+- 现有 Zone 默认为 `indoor`
+- UI 提示用户检查并更新 Zone 类型
+- 门/窗类型传感器自动建议 `entry` 类型
 
 ---
 
@@ -455,11 +561,14 @@ T=0s:  indoor_motion 检测到 motion (confidence=0.9)
 |----|------|----------|
 | T1 | 玻璃破碎单次触发 (Away) | 直接进入 PRE_ALERT 或 ALARM |
 | T2 | 室外 PIR 单次触发 (Away) | 保持 IDLE |
-| T3 | 顺序触发 outdoor→door→indoor | 快速进入 ALARM |
-| T4 | 乱序触发 indoor→door | 较慢进入 ALARM (无 chain_bonus) |
+| T3 | 顺序触发 outdoor→entry→indoor | 快速进入 ALARM |
+| T4 | 乱序触发 indoor→entry | 较慢进入 ALARM (无 chain_bonus) |
 | T5 | 信号间隔 >2 分钟 | 分数显著衰减 |
 | T6 | Home 模式室内运动 | 无效果 (contribution=0) |
-| T7 | 证据账本记录 | 事件包含完整贡献分解 |
+| T7 | **Home 模式门磁触发** | **有效果 (entry multiplier=1.2)** |
+| T8 | **Home 模式: outdoor + entry** | **可以触发 Warning/Alarm** |
+| T9 | 证据账本记录 | 事件包含完整贡献分解 |
+| T10 | Zone location_type 继承 | 传感器正确继承 Zone 的区域类型 |
 
 ### 7.2 性能要求
 
@@ -483,16 +592,18 @@ T=0s:  indoor_motion 检测到 motion (confidence=0.9)
 
 | 步骤 | 内容 | 预计工作量 |
 |------|------|------------|
-| 1 | 更新 `ChainDetectorConfig` 配置结构 | 0.5h |
-| 2 | 实现 `EntryPointState` 状态管理 | 1h |
-| 3 | 实现分数衰减逻辑 | 0.5h |
-| 4 | 实现贡献计算 (baseWeight, modeMultiplier, chainBonus) | 1h |
-| 5 | 实现状态转换 (阈值检查) | 0.5h |
-| 6 | 实现 EvidenceEntry 记录 | 0.5h |
-| 7 | 更新事件创建逻辑 | 0.5h |
-| 8 | 编写测试用例 | 1h |
-| 9 | 更新 UI (显示证据分解) | 1h |
-| **总计** | | **6.5h** |
+| 1 | Zone 表添加 `location_type` 字段 + 迁移 | 0.5h |
+| 2 | 更新 Zone API 和 UI (选择区域类型) | 1h |
+| 3 | 更新 `ChainDetectorConfig` 配置结构 | 0.5h |
+| 4 | 实现 `EntryPointState` 状态管理 | 1h |
+| 5 | 实现分数衰减逻辑 | 0.5h |
+| 6 | 实现贡献计算 (baseWeight, modeMultiplier, chainBonus) | 1h |
+| 7 | 实现状态转换 (阈值检查) | 0.5h |
+| 8 | 实现 EvidenceEntry 记录 | 0.5h |
+| 9 | 更新事件创建逻辑 | 0.5h |
+| 10 | 编写测试用例 | 1h |
+| 11 | 更新 UI (显示证据分解 + Zone类型) | 1h |
+| **总计** | | **8h** |
 
 ---
 
