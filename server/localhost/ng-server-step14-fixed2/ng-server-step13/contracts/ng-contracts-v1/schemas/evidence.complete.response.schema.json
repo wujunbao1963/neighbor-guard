@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.complete.response.schema.json",
+  "title": "POST /api/circles/:circleId/events/:eventId/evidence/complete - Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "accepted": { "type": "boolean" },
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "sessionId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "evidenceId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "evidenceStatus": {
+      "type": "string",
+      "enum": ["ARCHIVED", "VERIFYING", "FAILED"]
+    },
+    "completedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "archivedAt": {
+      "anyOf": [
+        { "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime" },
+        { "type": "null" }
+      ]
+    },
+    "manifest": {
+      "$ref": "https://neighborguard.dev/contracts/v1/evidence.manifest.schema.json"
+    },
+    "reportPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "included": { "type": "boolean" },
+        "type": { "type": "string", "enum": ["pdf", "zip"] },
+        "sha256": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Sha256"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["NONE", "UPLOADED", "AVAILABLE", "FAILED"]
+        }
+      },
+      "required": ["included"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "included": { "const": true } },
+            "required": ["included"]
+          },
+          "then": { "required": ["type", "sha256", "status"] }
+        },
+        {
+          "if": {
+            "properties": { "included": { "const": false } },
+            "required": ["included"]
+          },
+          "then": {
+            "properties": {
+              "status": { "const": "NONE" },
+              "type": false,
+              "sha256": false
+            }
+          }
+        }
+      ]
+    },
+    "deduped": { "type": "boolean" },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "itemSha256": { "type": "string" }
+        },
+        "required": ["code", "message"]
+      }
+    }
+  },
+  "required": [
+    "accepted",
+    "eventId",
+    "sessionId",
+    "evidenceId",
+    "evidenceStatus",
+    "completedAt",
+    "manifest"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "evidenceStatus": { "const": "ARCHIVED" } },
+        "required": ["evidenceStatus"]
+      },
+      "then": { "required": ["archivedAt"] }
+    },
+    {
+      "if": {
+        "properties": { "evidenceStatus": { "const": "VERIFYING" } },
+        "required": ["evidenceStatus"]
+      },
+      "then": {
+        "properties": { "archivedAt": { "type": "null" } },
+        "required": ["archivedAt"]
+      }
+    }
+  ]
+}

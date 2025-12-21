@@ -1,0 +1,60 @@
+{
+  "idempotencyKey": "00000000-0000-0000-0000-0000000003e9",
+  "event": {
+    "eventId": "00000000-0000-0000-0000-000000000065",
+    "occurredAt": "2025-12-19T19:20:10Z",
+    "eventType": "break_in_attempt",
+    "severity": "HIGH",
+    "notificationLevel": "NONE",
+    "status": "OPEN",
+    "title": "Door + motion while DISARMED (record only)",
+    "description": "Same signals as break-in rule, but mode=DISARMED so no notification.",
+    "zoneId": "00000000-0000-0000-0000-00000000000a",
+    "entryPointId": "00000000-0000-0000-0000-00000000000b",
+    "locationHint": {
+      "zoneId": "00000000-0000-0000-0000-00000000000a",
+      "confidence": 0.72,
+      "source": [
+        "door_contact",
+        "pir"
+      ]
+    },
+    "trackSummary": {
+      "trackId": "00000000-0000-0000-0000-0000000000c9",
+      "windowSec": 120,
+      "zonesVisited": [
+        {
+          "zoneName": "IndoorEntry"
+        }
+      ],
+      "maxPrivacyLevel": "RESTRICTED",
+      "dwellSeconds": 8,
+      "objectTypes": [
+        "person"
+      ]
+    },
+    "explainSummary": {
+      "ruleId": "R1_BREAKIN_DOOR_PIR",
+      "keySignals": [
+        {
+          "code": "door_contact.open",
+          "source": "door_contact",
+          "sourceRef": "front_door",
+          "value": "open"
+        },
+        {
+          "code": "pir.motion",
+          "source": "pir",
+          "sourceRef": "indoor_entry",
+          "value": "motion"
+        }
+      ],
+      "mode": "DISARMED"
+    },
+    "evidence": {
+      "available": false,
+      "policy": "NONE",
+      "clips": []
+    }
+  }
+}

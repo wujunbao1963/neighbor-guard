@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/topomap.schema.json",
+  "title": "TopoMap v1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "topoMapId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "createdAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "updatedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+      },
+      "minItems": 1
+    },
+    "entryPoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "entryPointId": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "zone": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DOOR",
+              "WINDOW",
+              "GARAGE",
+              "GATE",
+              "OTHER"
+            ]
+          }
+        },
+        "required": [
+          "entryPointId",
+          "name",
+          "zone"
+        ]
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "nodeId": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": [
+              "SENSOR",
+              "CAMERA",
+              "KEYPAD",
+              "SIREN",
+              "HUB",
+              "OTHER"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "zone": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+          },
+          "source": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/SensorSource"
+          },
+          "sourceRef": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "nodeId",
+          "nodeType",
+          "name"
+        ]
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fromZone": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+          },
+          "toZone": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ADJACENT",
+              "LINE_OF_SIGHT",
+              "ENTRY_PATH",
+              "PERIMETER_PATH",
+              "UNKNOWN"
+            ]
+          }
+        },
+        "required": [
+          "fromZone",
+          "toZone"
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "zones"
+  ]
+}

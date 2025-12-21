@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/device.register.response.schema.json",
+  "title": "POST /api/circles/:circleId/edge/devices - Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "deviceId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "deviceKey": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Base64Secret"
+    },
+    "pairedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fusion": {
+          "type": "boolean"
+        },
+        "evidenceUpload": {
+          "type": "boolean"
+        },
+        "topomap": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "fusion",
+        "evidenceUpload",
+        "topomap"
+      ]
+    }
+  },
+  "required": [
+    "deviceId",
+    "deviceKey",
+    "pairedAt",
+    "capabilities"
+  ]
+}

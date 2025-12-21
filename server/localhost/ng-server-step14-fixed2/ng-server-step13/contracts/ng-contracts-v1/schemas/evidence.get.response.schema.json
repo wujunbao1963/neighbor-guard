@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.get.response.schema.json",
+  "title": "EvidenceGetResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "evidenceId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "evidenceStatus": {
+      "type": "string",
+      "enum": [
+        "ARCHIVED",
+        "VERIFYING",
+        "FAILED"
+      ]
+    },
+    "completedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "archivedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "manifest": {
+      "$ref": "https://neighborguard.dev/contracts/v1/evidence.manifest.schema.json"
+    },
+    "reportPackage": {
+      "$ref": "https://neighborguard.dev/contracts/v1/evidence.complete.response.schema.json#/properties/reportPackage"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "eventId",
+    "evidenceId",
+    "evidenceStatus",
+    "completedAt",
+    "manifest"
+  ]
+}

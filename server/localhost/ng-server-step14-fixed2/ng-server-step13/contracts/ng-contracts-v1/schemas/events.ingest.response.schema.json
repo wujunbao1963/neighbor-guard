@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.ingest.response.schema.json",
+  "title": "POST /api/circles/:circleId/events/ingest - Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "accepted": {
+      "type": "boolean"
+    },
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "serverReceivedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "deduped": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "accepted",
+    "eventId",
+    "serverReceivedAt"
+  ]
+}

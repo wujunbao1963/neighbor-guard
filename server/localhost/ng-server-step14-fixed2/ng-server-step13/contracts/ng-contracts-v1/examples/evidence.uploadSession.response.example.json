@@ -1,0 +1,9 @@
+{
+  "sessionId": "00000000-0000-0000-0000-000000000258",
+  "uploadUrls": [
+    {
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "url": "https://example.com/upload/a"
+    }
+  ]
+}

@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/common.schema.json",
+  "title": "NeighborGuard Contracts v1 - Common Definitions",
+  "type": "object",
+  "definitions": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "DateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "Sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$"
+    },
+    "Base64Secret": {
+      "type": "string",
+      "minLength": 16
+    },
+    "EventType": {
+      "type": "string",
+      "enum": [
+        "fire_detected",
+        "co_detected",
+        "water_leak_detected",
+        "break_in_attempt",
+        "perimeter_damage",
+        "suspicious_person",
+        "suspicious_vehicle",
+        "package_delivered",
+        "package_removed",
+        "motion_detected"
+      ]
+    },
+    "EventSeverity": {
+      "type": "string",
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ]
+    },
+    "NotificationLevel": {
+      "type": "string",
+      "enum": [
+        "HIGH",
+        "NORMAL",
+        "NONE"
+      ]
+    },
+    "EventStatus": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "ACKED",
+        "RESOLVED"
+      ]
+    },
+    "HouseMode": {
+      "type": "string",
+      "enum": [
+        "DISARMED",
+        "HOME",
+        "AWAY",
+        "NIGHT"
+      ]
+    },
+    "PrivacyLevel": {
+      "type": "string",
+      "enum": [
+        "PUBLIC",
+        "SEMI_PRIVATE",
+        "PRIVATE",
+        "RESTRICTED"
+      ]
+    },
+    "SensorSource": {
+      "type": "string",
+      "enum": [
+        "door_contact",
+        "window_contact",
+        "pir",
+        "glass_break",
+        "camera_ai",
+        "keypad",
+        "manual",
+        "other"
+      ]
+    },
+    "EvidencePolicy": {
+      "type": "string",
+      "enum": [
+        "AUTO_ARCHIVE_HIGH",
+        "AUTO_ARCHIVE_MEDIUM_AWAY_NIGHT",
+        "NONE"
+      ]
+    },
+    "EvidenceClipHint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cameraId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "startOffsetSec": {
+          "type": "integer",
+          "minimum": -600,
+          "maximum": 0
+        },
+        "endOffsetSec": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 600
+        }
+      },
+      "required": [
+        "cameraId",
+        "startOffsetSec",
+        "endOffsetSec"
+      ]
+    },
+    "LocationHint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "zoneId": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source": {
+          "type": "array",
+          "items": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/SensorSource"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "zoneId",
+        "confidence",
+        "source"
+      ]
+    },
+    "TrackSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "trackId": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "windowSec": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "zonesVisited": {
+          "type": "array",
+          "items": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ZoneRef"
+          },
+          "minItems": 1
+        },
+        "maxPrivacyLevel": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/PrivacyLevel"
+        },
+        "dwellSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 86400
+        },
+        "objectTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "trackId",
+        "windowSec",
+        "zonesVisited",
+        "maxPrivacyLevel",
+        "dwellSeconds",
+        "objectTypes"
+      ]
+    },
+    "ExplainSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "keySignals": {
+          "type": "array",
+          "items": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/KeySignal"
+          },
+          "minItems": 1
+        },
+        "mode": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/HouseMode"
+        }
+      },
+      "required": [
+        "ruleId",
+        "keySignals",
+        "mode"
+      ]
+    },
+    "HaInstanceId": {
+      "title": "HA Instance Identifier",
+      "description": "Stable identifier for the Home Assistant instance. Prefer Home Assistant 'instance_id' (UUID).",
+      "oneOf": [
+        {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9._:-]{3,128}$"
+        }
+      ]
+    },
+    "AlarmState": {
+      "type": "string",
+      "description": "Alarm system arming/alarm state at the time the event was created on Edge.",
+      "enum": [
+        "UNKNOWN",
+        "DISARMED",
+        "ARMED_HOME",
+        "ARMED_AWAY",
+        "ENTRY_DELAY",
+        "EXIT_DELAY",
+        "ALARMING"
+      ]
+    },
+    "ZoneRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "zoneId": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "zoneName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "zoneType": {
+          "type": "string",
+          "enum": [
+            "INTERIOR",
+            "EXTERIOR",
+            "ENTRY",
+            "PERIMETER",
+            "GARAGE",
+            "YARD",
+            "UNKNOWN"
+          ]
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "zoneId"
+          ]
+        },
+        {
+          "required": [
+            "zoneName"
+          ]
+        }
+      ]
+    },
+    "KeySignal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Normalized signal code, e.g. 'door_contact.open', 'pir.motion', 'camera.person'."
+        },
+        "source": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/SensorSource"
+        },
+        "sourceRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "Vendor/native reference (e.g. HA entity_id, camera channel id)."
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "at": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "maxItems": 10
+        }
+      },
+      "required": [
+        "code"
+      ]
+    }
+  }
+}

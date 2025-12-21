@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.complete.request.schema.json",
+  "title": "POST /api/circles/:circleId/events/:eventId/evidence/complete - Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sessionId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "manifest": {
+      "$ref": "https://neighborguard.dev/contracts/v1/evidence.manifest.schema.json"
+    },
+    "reportPackage": {
+      "anyOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "included": { "type": "boolean" },
+            "type": { "type": "string", "enum": ["pdf", "zip"] },
+            "sha256": {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Sha256"
+            }
+          },
+          "required": ["included"],
+          "allOf": [
+            {
+              "if": {
+                "properties": { "included": { "const": true } },
+                "required": ["included"]
+              },
+              "then": { "required": ["type", "sha256"] }
+            },
+            {
+              "if": {
+                "properties": { "included": { "const": false } },
+                "required": ["included"]
+              },
+              "then": {
+                "properties": {
+                  "type": false,
+                  "sha256": false
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "sessionId",
+    "manifest"
+  ]
+}

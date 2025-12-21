@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.status.update.response.schema.json",
+  "title": "PATCH /api/circles/:circleId/events/:eventId/status - Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "updated": {
+      "type": "boolean"
+    },
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "status": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventStatus"
+    },
+    "updatedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "deduped": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "updated",
+    "eventId",
+    "status",
+    "updatedAt"
+  ]
+}

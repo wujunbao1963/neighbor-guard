@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/device.register.request.schema.json",
+  "title": "POST /api/circles/:circleId/edge/devices - Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "deviceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "home_assistant",
+        "edge_agent",
+        "other"
+      ]
+    },
+    "haInstanceId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/HaInstanceId"
+    },
+    "softwareVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "publicKey": {
+      "type": "string",
+      "minLength": 16
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fusion": {
+          "type": "boolean"
+        },
+        "evidenceUpload": {
+          "type": "boolean"
+        },
+        "topomap": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

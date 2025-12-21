@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.notes.create.response.schema.json",
+  "title": "POST /api/circles/:circleId/events/:eventId/notes - Response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "created": {
+      "type": "boolean"
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "noteId": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "createdAt": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+        },
+        "createdById": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 800
+        }
+      },
+      "required": [
+        "noteId",
+        "createdAt",
+        "text"
+      ]
+    }
+  },
+  "required": [
+    "created",
+    "note"
+  ]
+}

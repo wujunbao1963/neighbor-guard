@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/error.response.schema.json",
+  "title": "NeighborGuard Contracts v1 - ErrorResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "statusCode": {
+      "type": "integer",
+      "minimum": 400,
+      "maximum": 599
+    },
+    "error": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "requestId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "details": {
+      "type": "object"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "retryAfterSec": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400
+    }
+  },
+  "required": [
+    "statusCode",
+    "error",
+    "code",
+    "message",
+    "timestamp"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.downloadUrl.response.schema.json",
+  "title": "EvidenceDownloadUrlResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "sha256": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Sha256"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "sha256",
+    "url",
+    "expiresAt"
+  ]
+}

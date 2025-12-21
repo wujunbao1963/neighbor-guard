@@ -1,0 +1,6 @@
+{
+  "deviceName": "HA Basement N100",
+  "platform": "home_assistant",
+  "haInstanceId": "ha-123",
+  "softwareVersion": "1.0.0"
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.notes.create.request.schema.json",
+  "title": "POST /api/circles/:circleId/events/:eventId/notes - Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 800
+    },
+    "clientNoteId": {
+      "oneOf": [
+        {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

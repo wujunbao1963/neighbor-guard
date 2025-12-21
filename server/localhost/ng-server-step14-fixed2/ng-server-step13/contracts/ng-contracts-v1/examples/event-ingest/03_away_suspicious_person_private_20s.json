@@ -1,0 +1,72 @@
+{
+  "idempotencyKey": "00000000-0000-0000-0000-0000000003ea",
+  "event": {
+    "eventId": "00000000-0000-0000-0000-000000000066",
+    "occurredAt": "2025-12-20T02:05:00Z",
+    "eventType": "suspicious_person",
+    "severity": "MEDIUM",
+    "notificationLevel": "HIGH",
+    "status": "OPEN",
+    "title": "Suspicious person in backyard",
+    "description": "Person detected dwelling ~20s in PRIVATE backyard zone (mode=AWAY).",
+    "zoneId": "00000000-0000-0000-0000-00000000000c",
+    "entryPointId": "00000000-0000-0000-0000-00000000000d",
+    "locationHint": {
+      "zoneId": "00000000-0000-0000-0000-00000000000c",
+      "confidence": 0.81,
+      "source": [
+        "camera_ai"
+      ]
+    },
+    "trackSummary": {
+      "trackId": "00000000-0000-0000-0000-0000000000ca",
+      "windowSec": 120,
+      "zonesVisited": [
+        {
+          "zoneName": "SidePath"
+        },
+        {
+          "zoneName": "BackYard"
+        }
+      ],
+      "maxPrivacyLevel": "PRIVATE",
+      "dwellSeconds": 20,
+      "objectTypes": [
+        "person"
+      ]
+    },
+    "explainSummary": {
+      "ruleId": "R2_SUSPICIOUS_PERSON_PRIVATE_DWELL",
+      "keySignals": [
+        {
+          "code": "camera_ai",
+          "source": "camera_ai",
+          "sourceRef": "backyard",
+          "value": "person"
+        },
+        {
+          "code": "dwellSeconds>",
+          "source": "other",
+          "value": "dwellSeconds>=20"
+        },
+        {
+          "code": "privacy",
+          "source": "other",
+          "value": "privacy=PRIVATE"
+        }
+      ],
+      "mode": "AWAY"
+    },
+    "evidence": {
+      "available": true,
+      "policy": "AUTO_ARCHIVE_MEDIUM_AWAY_NIGHT",
+      "clips": [
+        {
+          "cameraId": "cam_back",
+          "startOffsetSec": -5,
+          "endOffsetSec": 25
+        }
+      ]
+    }
+  }
+}

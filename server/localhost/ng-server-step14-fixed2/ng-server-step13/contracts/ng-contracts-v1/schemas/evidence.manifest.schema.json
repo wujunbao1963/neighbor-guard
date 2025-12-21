@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.manifest.schema.json",
+  "title": "EvidenceManifest (v1)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "image",
+              "video",
+              "pdf",
+              "zip",
+              "json",
+              "other"
+            ]
+          },
+          "sha256": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Sha256"
+          },
+          "contentType": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "timeRange": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "startAt": {
+                "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+              },
+              "endAt": {
+                "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+              }
+            },
+            "required": [
+              "startAt",
+              "endAt"
+            ]
+          },
+          "deviceRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "edge",
+                  "camera",
+                  "sensor",
+                  "other"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "displayName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "sha256",
+          "contentType",
+          "size",
+          "timeRange",
+          "deviceRef"
+        ]
+      }
+    },
+    "encryption": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "age",
+                "none"
+              ]
+            },
+            "recipientPublicKey": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "scheme"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "items"
+  ]
+}

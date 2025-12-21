@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/evidence.uploadSession.request.schema.json",
+  "title": "POST /api/circles/:circleId/events/:eventId/evidence/upload-session - Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "manifest": {
+      "$ref": "https://neighborguard.dev/contracts/v1/evidence.manifest.schema.json"
+    }
+  },
+  "required": [
+    "manifest"
+  ]
+}

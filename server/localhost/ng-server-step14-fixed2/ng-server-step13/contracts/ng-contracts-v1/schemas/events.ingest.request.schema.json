@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.ingest.request.schema.json",
+  "title": "POST /api/circles/:circleId/events/ingest - Request",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 8,
+      "maxLength": 128
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "eventId": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+        },
+        "occurredAt": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+        },
+        "eventType": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventType"
+        },
+        "severity": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventSeverity"
+        },
+        "notificationLevel": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/NotificationLevel"
+        },
+        "status": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventStatus"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 2000
+        },
+        "zoneId": {
+          "anyOf": [
+            {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entryPointId": {
+          "anyOf": [
+            {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "locationHint": {
+          "anyOf": [
+            {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/LocationHint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trackSummary": {
+          "anyOf": [
+            {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/TrackSummary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "explainSummary": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ExplainSummary"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "available": {
+                  "type": "boolean"
+                },
+                "policy": {
+                  "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EvidencePolicy"
+                },
+                "clips": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EvidenceClipHint"
+                  },
+                  "minItems": 0
+                }
+              },
+              "required": [
+                "available",
+                "policy",
+                "clips"
+              ]
+            }
+          ]
+        },
+        "alarmState": {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/AlarmState"
+        },
+        "localDisarm": {
+          "type": "boolean",
+          "description": "True if the alarm/event was locally disarmed/cleared on Edge (e.g. keypad) within the same incident window."
+        }
+      },
+      "required": [
+        "eventId",
+        "occurredAt",
+        "eventType",
+        "severity",
+        "notificationLevel",
+        "status",
+        "title",
+        "explainSummary"
+      ]
+    }
+  },
+  "required": [
+    "idempotencyKey",
+    "event"
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.eventSummary.schema.json",
+  "title": "EventSummary",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "occurredAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "eventType": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventType"
+    },
+    "severity": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventSeverity"
+    },
+    "notificationLevel": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/NotificationLevel"
+    },
+    "status": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventStatus"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "zoneId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "entryPointId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "alarmState": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/AlarmState"
+    },
+    "localDisarm": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "eventId",
+    "occurredAt",
+    "eventType",
+    "severity",
+    "notificationLevel",
+    "status",
+    "title"
+  ]
+}

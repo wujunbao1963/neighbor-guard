@@ -1,0 +1,19 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v1/security.schemes.json",
+  "title": "NeighborGuard Contracts v1 - Security Schemes (JSON, OpenAPI-like)",
+  "schemes": {
+    "DeviceKeyAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "Edge uses deviceKey issued by Cloud. Header format: 'Authorization: Device <deviceKey>'. Key rotation and revocation required.",
+      "pattern": "^Device\\s+.+$"
+    },
+    "UserJwt": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT",
+      "description": "Cloud user auth for App / web."
+    }
+  }
+}

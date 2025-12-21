@@ -1,0 +1,69 @@
+{
+  "idempotencyKey": "00000000-0000-0000-0000-0000000003ec",
+  "event": {
+    "eventId": "00000000-0000-0000-0000-000000000068",
+    "occurredAt": "2025-12-19T04:40:12Z",
+    "eventType": "break_in_attempt",
+    "severity": "HIGH",
+    "notificationLevel": "HIGH",
+    "status": "OPEN",
+    "title": "Possible break-in attempt (queued offline)",
+    "description": "Created while offline; sent when connectivity restored. Same idempotencyKey/eventId for safe retry.",
+    "zoneId": "00000000-0000-0000-0000-00000000000a",
+    "entryPointId": "00000000-0000-0000-0000-00000000000b",
+    "locationHint": {
+      "zoneId": "00000000-0000-0000-0000-00000000000a",
+      "confidence": 0.86,
+      "source": [
+        "door_contact",
+        "pir"
+      ]
+    },
+    "trackSummary": {
+      "trackId": "00000000-0000-0000-0000-0000000000cc",
+      "windowSec": 120,
+      "zonesVisited": [
+        {
+          "zoneName": "Porch"
+        },
+        {
+          "zoneName": "IndoorEntry"
+        }
+      ],
+      "maxPrivacyLevel": "RESTRICTED",
+      "dwellSeconds": 18,
+      "objectTypes": [
+        "person"
+      ]
+    },
+    "explainSummary": {
+      "ruleId": "R1_BREAKIN_DOOR_PIR",
+      "keySignals": [
+        {
+          "code": "door_contact.open",
+          "source": "door_contact",
+          "sourceRef": "front_door",
+          "value": "open"
+        },
+        {
+          "code": "pir.motion",
+          "source": "pir",
+          "sourceRef": "indoor_entry",
+          "value": "motion"
+        }
+      ],
+      "mode": "NIGHT"
+    },
+    "evidence": {
+      "available": true,
+      "policy": "AUTO_ARCHIVE_HIGH",
+      "clips": [
+        {
+          "cameraId": "cam_front",
+          "startOffsetSec": -10,
+          "endOffsetSec": 30
+        }
+      ]
+    }
+  }
+}

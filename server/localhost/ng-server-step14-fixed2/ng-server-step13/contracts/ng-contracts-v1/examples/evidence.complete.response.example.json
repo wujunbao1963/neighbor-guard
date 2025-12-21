@@ -1,0 +1,40 @@
+{
+  "accepted": true,
+  "eventId": "00000000-0000-0000-0000-000000000064",
+  "sessionId": "00000000-0000-0000-0000-000000000901",
+  "evidenceId": "00000000-0000-0000-0000-000000000259",
+  "evidenceStatus": "ARCHIVED",
+  "completedAt": "2025-12-19T03:15:00Z",
+  "archivedAt": "2025-12-19T03:15:05Z",
+  "manifest": {
+    "items": [
+      {
+        "type": "video",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "contentType": "video/mp4",
+        "size": 4567890,
+        "timeRange": {
+          "startAt": "2025-12-19T03:14:50Z",
+          "endAt": "2025-12-19T03:15:20Z"
+        },
+        "deviceRef": {
+          "kind": "camera",
+          "id": "cam1",
+          "displayName": "Front Door Camera"
+        }
+      }
+    ],
+    "encryption": {
+      "scheme": "age",
+      "recipientPublicKey": "age1examplepublickey..."
+    }
+  },
+  "reportPackage": {
+    "included": true,
+    "type": "pdf",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "status": "UPLOADED"
+  },
+  "deduped": false,
+  "warnings": []
+}

@@ -1,0 +1,60 @@
+{
+  "idempotencyKey": "00000000-0000-0000-0000-0000000003eb",
+  "event": {
+    "eventId": "00000000-0000-0000-0000-000000000067",
+    "occurredAt": "2025-12-19T18:02:30Z",
+    "eventType": "package_delivered",
+    "severity": "LOW",
+    "notificationLevel": "NORMAL",
+    "status": "OPEN",
+    "title": "Package delivered",
+    "description": "Package delivered at front porch.",
+    "zoneId": "00000000-0000-0000-0000-00000000000e",
+    "entryPointId": null,
+    "locationHint": {
+      "zoneId": "00000000-0000-0000-0000-00000000000e",
+      "confidence": 0.9,
+      "source": [
+        "camera_ai"
+      ]
+    },
+    "trackSummary": {
+      "trackId": "00000000-0000-0000-0000-0000000000cb",
+      "windowSec": 120,
+      "zonesVisited": [
+        {
+          "zoneName": "Porch"
+        }
+      ],
+      "maxPrivacyLevel": "SEMI_PRIVATE",
+      "dwellSeconds": 5,
+      "objectTypes": [
+        "person",
+        "package"
+      ]
+    },
+    "explainSummary": {
+      "ruleId": "R4_PACKAGE_DELIVERED",
+      "keySignals": [
+        {
+          "code": "camera_ai",
+          "source": "camera_ai",
+          "sourceRef": "porch",
+          "value": "package_delivered"
+        }
+      ],
+      "mode": "HOME"
+    },
+    "evidence": {
+      "available": true,
+      "policy": "NONE",
+      "clips": [
+        {
+          "cameraId": "cam_front",
+          "startOffsetSec": -3,
+          "endOffsetSec": 12
+        }
+      ]
+    }
+  }
+}

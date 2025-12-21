@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neighborguard.dev/contracts/v1/events.eventDetail.schema.json",
+  "title": "EventDetail",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "eventId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "occurredAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "eventType": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventType"
+    },
+    "severity": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventSeverity"
+    },
+    "notificationLevel": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/NotificationLevel"
+    },
+    "status": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EventStatus"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "zoneId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "entryPointId": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+    },
+    "alarmState": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/AlarmState"
+    },
+    "localDisarm": {
+      "type": "boolean"
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 800
+    },
+    "serverReceivedAt": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+    },
+    "ackedAt": {
+      "oneOf": [
+        {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "resolvedAt": {
+      "oneOf": [
+        {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trackSummary": {
+      "oneOf": [
+        {
+          "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/TrackSummary"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "explainSummary": {
+      "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/ExplainSummary"
+    },
+    "evidence": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "policy": {
+              "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/EvidencePolicy"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "REQUESTED",
+                "UPLOADING",
+                "ARCHIVED",
+                "FAILED"
+              ]
+            },
+            "evidenceId": {
+              "oneOf": [
+                {
+                  "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "policy",
+            "status"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "noteId": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+          },
+          "createdAt": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/DateTime"
+          },
+          "createdById": {
+            "$ref": "https://neighborguard.dev/contracts/v1/common.schema.json#/definitions/Uuid"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 800
+          }
+        },
+        "required": [
+          "noteId",
+          "createdAt",
+          "text"
+        ]
+      }
+    }
+  },
+  "required": [
+    "eventId",
+    "occurredAt",
+    "eventType",
+    "severity",
+    "notificationLevel",
+    "status",
+    "title",
+    "serverReceivedAt",
+    "explainSummary"
+  ]
+}

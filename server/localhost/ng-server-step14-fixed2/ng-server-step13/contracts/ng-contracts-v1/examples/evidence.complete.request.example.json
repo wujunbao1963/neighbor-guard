@@ -1,0 +1,31 @@
+{
+  "sessionId": "00000000-0000-0000-0000-000000000258",
+  "manifest": {
+    "items": [
+      {
+        "type": "video",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "contentType": "video/mp4",
+        "size": 4567890,
+        "timeRange": {
+          "startAt": "2025-12-19T03:12:35Z",
+          "endAt": "2025-12-19T03:13:15Z"
+        },
+        "deviceRef": {
+          "kind": "camera",
+          "id": "cam_front",
+          "displayName": "Front Door Camera"
+        }
+      }
+    ],
+    "encryption": {
+      "scheme": "age",
+      "recipientPublicKey": "age1examplepublickey"
+    }
+  },
+  "reportPackage": {
+    "included": true,
+    "type": "pdf",
+    "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+}
