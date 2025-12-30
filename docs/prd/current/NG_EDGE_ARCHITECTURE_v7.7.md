@@ -1,0 +1,1 @@
+NG_EDGE_ARCHITECTURE_v7.7 full content provided in chat
