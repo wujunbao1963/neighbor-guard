@@ -109,6 +109,23 @@ curl -X POST http://localhost:3000/api/circles/$CIRCLE_ID/events/ingest \
   -d '{"idempotencyKey":"demo-1","event":{"eventId":"00000000-0000-4000-8000-000000000001","title":"Test","eventType":"SUSPICIOUS_PERSON","severity":"MEDIUM","notificationLevel":"record","occurredAt":"2025-12-19T00:00:00Z","explainSummary":"demo","keySignals":{},"zonesVisited":[],"raw":{}}}'
 ```
 
+### 4b) Edge v7.7 Event Summary Upsert (DeviceKey)
+
+```bash
+curl -X POST http://localhost:3000/api/circles/<CIRCLE_ID>/edge/events/summary-upsert 
+  -H "Authorization: Device <DEVICE_KEY>" 
+  -H "Content-Type: application/json" 
+  -d '{
+    "schemaVersion": "v7.7",
+    "circleId": "<CIRCLE_ID>",
+    "eventId": "v77-demo-1",
+    "edgeInstanceId": "edge-local-1",
+    "threatState": "TRIGGERED",
+    "updatedAt": "2025-12-30T00:00:00Z",
+    "sequence": 1,
+    "summary": {"mode": "NIGHT", "workflowClass": "PERIMETER"}
+  }'
+```
 ### 5) List events (Bearer JWT)
 
 ```bash

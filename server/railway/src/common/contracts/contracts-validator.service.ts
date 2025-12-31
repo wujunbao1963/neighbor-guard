@@ -28,6 +28,15 @@ export class ContractsValidatorService {
   private readonly validateDeviceRegisterReq: ValidateFunction;
   private readonly validateDeviceRegisterResp: ValidateFunction;
 
+  private readonly validateEdgeEventSummaryUpsertReq: ValidateFunction;
+  private readonly validateEdgeIncidentManifestUpsertReq: ValidateFunction;
+
+  private readonly validateAppIncidentManifestGetResp: ValidateFunction;
+  private readonly validateAppEvidenceTicketCreateReq: ValidateFunction;
+  private readonly validateAppEvidenceTicketCreateResp: ValidateFunction;
+  private readonly validateAppEvidenceTicketResolveResp: ValidateFunction;
+  private readonly validateAppEvidenceTicketMetaResp: ValidateFunction;
+
   constructor() {
     this.ajv = new Ajv2020({
       strict: false,
@@ -76,6 +85,32 @@ export class ContractsValidatorService {
     );
     this.validateDeviceRegisterResp = this.mustGetSchema(
       'https://neighborguard.dev/contracts/v1/device.register.response.schema.json',
+    );
+
+    this.validateEdgeEventSummaryUpsertReq = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/edge.eventSummaryUpsert.schema.json',
+    );
+
+    this.validateEdgeIncidentManifestUpsertReq = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/edge.incidentManifestUpsert.schema.json',
+    );
+
+    this.validateAppIncidentManifestGetResp = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/app.incidentManifest.get.response.schema.json',
+    );
+    this.validateAppEvidenceTicketCreateReq = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.create.request.schema.json',
+    );
+    this.validateAppEvidenceTicketCreateResp = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.create.response.schema.json',
+    );
+
+    this.validateAppEvidenceTicketResolveResp = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.resolve.response.schema.json',
+    );
+
+    this.validateAppEvidenceTicketMetaResp = this.mustGetSchema(
+      'https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.meta.response.schema.json',
     );
   }
 
@@ -131,6 +166,36 @@ export class ContractsValidatorService {
     const ok = this.validateDeviceRegisterResp(body);
     if (ok) return { ok: true };
     return { ok: false, errors: this.validateDeviceRegisterResp.errors ?? [] };
+  }
+
+  validateAppIncidentManifestGetResponse(body: unknown): ValidationResult {
+    const ok = this.validateAppIncidentManifestGetResp(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateAppIncidentManifestGetResp.errors ?? [] };
+  }
+
+  validateAppEvidenceTicketCreateRequest(body: unknown): ValidationResult {
+    const ok = this.validateAppEvidenceTicketCreateReq(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateAppEvidenceTicketCreateReq.errors ?? [] };
+  }
+
+  validateAppEvidenceTicketCreateResponse(body: unknown): ValidationResult {
+    const ok = this.validateAppEvidenceTicketCreateResp(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateAppEvidenceTicketCreateResp.errors ?? [] };
+  }
+
+  validateAppEvidenceTicketResolveResponse(body: unknown): ValidationResult {
+    const ok = this.validateAppEvidenceTicketResolveResp(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateAppEvidenceTicketResolveResp.errors ?? [] };
+  }
+
+  validateAppEvidenceTicketMetaResponse(body: unknown): ValidationResult {
+    const ok = this.validateAppEvidenceTicketMetaResp(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateAppEvidenceTicketMetaResp.errors ?? [] };
   }
 
  
@@ -215,19 +280,38 @@ validateEvidenceDownloadUrlResponse(body: unknown): ValidationResult {
     }
     return fn;
   }
+  validateEdgeEventSummaryUpsertRequest(body: unknown): ValidationResult {
+    const ok = this.validateEdgeEventSummaryUpsertReq(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateEdgeEventSummaryUpsertReq.errors ?? [] };
+  }
+
+  validateEdgeIncidentManifestUpsertRequest(body: unknown): ValidationResult {
+    const ok = this.validateEdgeIncidentManifestUpsertReq(body);
+    if (ok) return { ok: true };
+    return { ok: false, errors: this.validateEdgeIncidentManifestUpsertReq.errors ?? [] };
+  }
+
 
   private loadSchemas(): void {
-    const base = path.join(process.cwd(), 'contracts', 'ng-contracts-v1', 'schemas');
-    const files = fs
-      .readdirSync(base)
-      .filter((f) => f.endsWith('.json'))
-      .sort();
+    const roots = [
+      path.join(process.cwd(), 'contracts', 'ng-contracts-v1', 'schemas'),
+      path.join(process.cwd(), 'contracts', 'ng-contracts-v7.7', 'schemas'),
+    ];
 
-    for (const f of files) {
-      const p = path.join(base, f);
-      const raw = fs.readFileSync(p, 'utf-8');
-      const json = JSON.parse(raw);
-      this.ajv.addSchema(json);
+    for (const base of roots) {
+      if (!fs.existsSync(base)) continue;
+      const files = fs
+        .readdirSync(base)
+        .filter((f) => f.endsWith('.json'))
+        .sort();
+
+      for (const f of files) {
+        const p = path.join(base, f);
+        const raw = fs.readFileSync(p, 'utf-8');
+        const json = JSON.parse(raw);
+        this.ajv.addSchema(json);
+      }
     }
   }
 

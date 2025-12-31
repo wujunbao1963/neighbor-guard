@@ -1,0 +1,21 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.resolve.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["ok", "ticketId", "evidenceKey", "mode"],
+  "properties": {
+    "ok": { "const": true },
+    "ticketId": { "type": "string", "format": "uuid" },
+    "evidenceKey": { "type": "string" },
+    "mode": { "type": "string", "enum": ["EDGE_DIRECT_URL", "NOT_AVAILABLE"] },
+    "url": { "type": "string", "format": "uri" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "mode": { "const": "EDGE_DIRECT_URL" } } },
+      "then": { "required": ["url"] }
+    }
+  ]
+}

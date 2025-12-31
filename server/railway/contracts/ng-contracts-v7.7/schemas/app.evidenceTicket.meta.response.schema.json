@@ -1,0 +1,15 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.meta.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ok", "ticketId", "evidenceKey", "contentType", "contentLength", "acceptRanges"],
+  "properties": {
+    "ok": { "const": true },
+    "ticketId": { "type": "string", "format": "uuid" },
+    "evidenceKey": { "type": "string" },
+    "contentType": { "type": "string" },
+    "contentLength": { "type": ["integer", "null"], "minimum": 0 },
+    "acceptRanges": { "type": ["string", "null"] }
+  }
+}

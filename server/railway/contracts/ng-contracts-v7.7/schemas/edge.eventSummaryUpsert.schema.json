@@ -1,0 +1,47 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v7.7/edge.eventSummaryUpsert.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "circleId",
+    "eventId",
+    "edgeInstanceId",
+    "threatState",
+    "updatedAt"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "v7.7"
+    },
+    "circleId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "edgeInstanceId": {
+      "type": "string"
+    },
+    "threatState": {
+      "type": "string"
+    },
+    "triggerReason": {
+      "type": "string"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

@@ -12,6 +12,10 @@ import { EventsIngestModule } from './events-ingest/events-ingest.module';
 import { EventsReadModule } from './events-read/events-read.module';
 import { EventsCollabModule } from './events-collab/events-collab.module';
 import { EvidenceModule } from './evidence/evidence.module';
+import { EdgeEventsModule } from './edge-events/edge-events.module';
+import { IncidentReadModule } from './incident-read/incident-read.module';
+import { EvidenceTicketsModule } from './evidence-tickets/evidence-tickets.module';
+import { AdminModule } from './admin/admin.module';
 import { NgExceptionFilter } from './common/errors/ng-exception.filter';
 
 @Module({
@@ -57,6 +61,10 @@ import { NgExceptionFilter } from './common/errors/ng-exception.filter';
     EventsIngestModule,
     EventsReadModule,
     EventsCollabModule,
+    EdgeEventsModule,
+    IncidentReadModule,
+    EvidenceTicketsModule,
+    AdminModule,
     EvidenceModule,
   ],
   providers: [

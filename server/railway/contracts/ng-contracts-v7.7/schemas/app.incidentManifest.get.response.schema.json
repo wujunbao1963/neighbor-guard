@@ -1,0 +1,16 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v7.7/app.incidentManifest.get.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["ok", "circleId", "eventId", "edgeInstanceId", "edgeUpdatedAt", "sequence", "manifest"],
+  "properties": {
+    "ok": { "const": true },
+    "circleId": { "type": "string", "format": "uuid" },
+    "eventId": { "type": "string" },
+    "edgeInstanceId": { "type": "string" },
+    "edgeUpdatedAt": { "type": "string", "format": "date-time" },
+    "sequence": { "type": "integer" },
+    "manifest": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

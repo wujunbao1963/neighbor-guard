@@ -1,0 +1,14 @@
+{
+  "$id": "https://neighborguard.dev/contracts/v7.7/app.evidenceTicket.create.response.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["ok", "ticketId", "evidenceKey", "expiresAt", "accessMode"],
+  "properties": {
+    "ok": { "const": true },
+    "ticketId": { "type": "string", "format": "uuid" },
+    "evidenceKey": { "type": "string" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "accessMode": { "type": "string", "enum": ["TICKET_ONLY"] }
+  },
+  "additionalProperties": false
+}
